@@ -1,9 +1,9 @@
-﻿{
+{
 	"format_version": "1.12.0",
 	"minecraft:geometry": [
 		{
 			"description": {
-				"identifier": "geometry.villager_firefighter",
+				"identifier": "geometry.renderphoenix.firefighter",
 				"texture_width": 64,
 				"texture_height": 64,
 				"visible_bounds_width": 23,

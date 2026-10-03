@@ -10,7 +10,7 @@
         "default": "textures/entity/villager_helicopter/farmer"
       },
       "geometry": {
-        "default": "geometry.villager_helicopter"
+        "default": "geometry.renderphoenix.helicopter"
       },
       "animations": {
         "propellers": "animation.villager_helicopter.propellers"

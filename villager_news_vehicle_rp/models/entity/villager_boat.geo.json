@@ -1,6 +1,6 @@
 {
   "format_version": "1.8.0",
-  "geometry.villager_boat": {
+  "geometry.renderphoenix.boat": {
     "texturewidth": 64,
     "textureheight": 64,
     "visible_bounds_width": 18,
