@@ -1,0 +1,27 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.villager_helicopter.flight": {
+      "initial_state": "idle",
+      "states": {
+        "idle": {
+          "transitions": [
+            {
+              "flying": "query.has_rider"
+            }
+          ]
+        },
+        "flying": {
+          "transitions": [
+            {
+              "idle": "!query.has_rider"
+            }
+          ],
+          "on_exit": [
+            "@s villager_news:on_dismount"
+          ]
+        }
+      }
+    }
+  }
+}

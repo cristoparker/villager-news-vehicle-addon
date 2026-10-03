@@ -1,0 +1,17 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.villager_helicopter.propellers": {
+      "loop": true,
+      "animation_length": 1.0,
+      "bones": {
+        "main_propeller": {
+          "rotation": [0, 0, "query.anim_time * 1440"]
+        },
+        "back_propeller": {
+          "rotation": ["query.anim_time * 1440", 0, 0]
+        }
+      }
+    }
+  }
+}
