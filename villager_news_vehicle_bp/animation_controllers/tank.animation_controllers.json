@@ -1,26 +1,26 @@
 {
   "format_version": "1.10.0",
   "animation_controllers": {
-    "controller.animation.villager_helicopter.flight": {
-      "initial_state": "grounded",
+    "controller.animation.tank.pilot": {
+      "initial_state": "wander",
       "states": {
-        "grounded": {
+        "wander": {
           "on_entry": [
-            "@s renderphoenix:on_dismount"
+            "@s renderphoenix:on_wander"
           ],
           "transitions": [
             {
-              "flying": "query.has_rider"
+              "piloted": "query.has_rider"
             }
           ]
         },
-        "flying": {
+        "piloted": {
           "on_entry": [
-            "@s renderphoenix:player_mount"
+            "@s renderphoenix:on_player_mount"
           ],
           "transitions": [
             {
-              "grounded": "!query.has_rider"
+              "wander": "!query.has_rider"
             }
           ]
         }

@@ -161,17 +161,6 @@
       "minecraft:interact": {
         "interactions": [
           {
-            "interact_text": "action.interact.ride.boat",
-            "on_interact": {
-              "filters": {
-                "test": "is_family",
-                "subject": "other",
-                "value": "player"
-              },
-              "event": "renderphoenix:player_mount"
-            }
-          },
-          {
             "interact_text": "action.interact.board_villager",
             "on_interact": {
               "filters": {
@@ -193,25 +182,6 @@
             }
           }
         ]
-      },
-      "minecraft:entity_sensor": {
-        "sensor_range": 3.0,
-        "relative_range": false,
-        "event_filters": {
-          "all_of": [
-            {
-              "test": "has_rider",
-              "subject": "self",
-              "value": false
-            },
-            {
-              "test": "is_family",
-              "subject": "other",
-              "value": "villager"
-            }
-          ]
-        },
-        "event": "renderphoenix:villager_mount"
       }
     },
     "events": {

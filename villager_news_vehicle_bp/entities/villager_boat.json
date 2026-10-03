@@ -5,9 +5,22 @@
       "identifier": "renderphoenix:boat",
       "is_spawnable": true,
       "is_summonable": true,
-      "is_experimental": false
+      "is_experimental": false,
+      "animations": {
+        "pilot_controller": "controller.animation.villager_boat.pilot"
+      },
+      "scripts": {
+        "animate": [
+          "pilot_controller"
+        ]
+      }
     },
     "component_groups": {
+      "renderphoenix:boat_idle": {
+        "minecraft:movement": {
+          "value": 0.0
+        }
+      },
       "renderphoenix:boat_player_pilot": {
         "minecraft:input_ground_controlled": {},
         "minecraft:movement": {
@@ -46,7 +59,11 @@
           {
             "width": 3,
             "height": 2.2,
-            "pivot": [0, 1.1, 0]
+            "pivot": [
+              0,
+              1.1,
+              0
+            ]
           }
         ]
       },
@@ -109,22 +126,38 @@
         "controlling_seat": 0,
         "seats": [
           {
-            "position": [0, 0.5, 1.7],
+            "position": [
+              0,
+              0.5,
+              1.7
+            ],
             "min_rider_count": 0,
             "max_rider_count": 1
           },
           {
-            "position": [0, 0.5, -0.5],
+            "position": [
+              0,
+              0.5,
+              -0.5
+            ],
             "min_rider_count": 1,
             "max_rider_count": 2
           },
           {
-            "position": [0, 0.5, -2],
+            "position": [
+              0,
+              0.5,
+              -2
+            ],
             "min_rider_count": 2,
             "max_rider_count": 3
           },
           {
-            "position": [0, 0.5, -3],
+            "position": [
+              0,
+              0.5,
+              -3
+            ],
             "min_rider_count": 3,
             "max_rider_count": 4
           }
@@ -132,17 +165,6 @@
       },
       "minecraft:interact": {
         "interactions": [
-          {
-            "interact_text": "action.interact.ride.boat",
-            "on_interact": {
-              "filters": {
-                "test": "is_family",
-                "subject": "other",
-                "value": "player"
-              },
-              "event": "renderphoenix:boat_player_mount"
-            }
-          },
           {
             "interact_text": "action.interact.board_villager",
             "on_interact": {
@@ -166,31 +188,20 @@
             }
           }
         ]
-      },
-      "minecraft:entity_sensor": {
-        "sensor_range": 3.0,
-        "relative_range": false,
-        "event_filters": {
-          "all_of": [
-            {
-              "test": "has_rider",
-              "subject": "self",
-              "value": false
-            },
-            {
-              "test": "is_family",
-              "subject": "other",
-              "value": "villager"
-            }
-          ]
-        },
-        "event": "renderphoenix:boat_villager_mount"
       }
     },
     "events": {
+      "minecraft:entity_spawned": {
+        "add": {
+          "component_groups": [
+            "renderphoenix:boat_idle"
+          ]
+        }
+      },
       "renderphoenix:boat_player_mount": {
         "remove": {
           "component_groups": [
+            "renderphoenix:boat_idle",
             "renderphoenix:boat_villager_pilot"
           ]
         },
@@ -200,20 +211,16 @@
           ]
         }
       },
-      "renderphoenix:boat_villager_mount": {
-        "run_command": {
-          "command": [
-            "/ride @e[type=villager,r=3.5,c=1] start_riding @s"
-          ]
-        },
+      "renderphoenix:boat_on_dismount": {
         "remove": {
           "component_groups": [
-            "renderphoenix:boat_player_pilot"
+            "renderphoenix:boat_player_pilot",
+            "renderphoenix:boat_villager_pilot"
           ]
         },
         "add": {
           "component_groups": [
-            "renderphoenix:boat_villager_pilot"
+            "renderphoenix:boat_idle"
           ]
         }
       },

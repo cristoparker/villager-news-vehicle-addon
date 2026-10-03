@@ -64,6 +64,21 @@ An authentic, fully-featured **Villager News Vehicle Addon** for Minecraft Bedro
 
 ---
 
+### 4. 🪖 Villager News Tank (`renderphoenix:tank`)
+- **Iconic 3D Model**: 231-bone authentic reconstruction straight from *Villager News: WAR!*, featuring the arched villager cannon, rotating turret (`tank_head`), and dual caterpillar tracks made of villagers chanting *"I am a wheel!"*.
+- **Authentic Villager Wheels & Tracks**:
+  - Full oval tread loop on each side complete with front idler curves, ground treads, top return runs, and rear sprocket curves.
+  - 8 rotating road wheels (`wheel_r1`..`wheel_r4`, `wheel_l1`..`wheel_l4`) that spin dynamically as the tank travels (`query.modified_distance_moved`).
+- **Aiming Turret**:
+  - Turret and arched cannon smoothly track target yaw (`query.target_y_rotation`) to aim where you look.
+- **Driveable Heavy Armor**:
+  - Heavy armored chassis (200 HP) with `step_height: 1.06` to crawl over obstacles.
+  - Mount the commander's hatch on top of the turret at `[0, 4.8, 1.5]` to command and drive across the terrain.
+- **Hitbox**:
+  - Custom hit test: `width: 5.0`, `height: 4.0`, `pivot: [0, 2.0, 0.2]`.
+
+---
+
 ## 📁 Repository Structure
 
 ```
@@ -128,11 +143,13 @@ update.bat
   - 🚁 **Villager News Helicopter Spawn Egg**
   - 🚤 **Villager News Boat Spawn Egg**
   - 🚒 **Villager News Firefighter Spawn Egg**
+  - 🪖 **Villager News Tank Spawn Egg**
 - **Commands**:
   ```mcfunction
   /summon renderphoenix:helicopter
   /summon renderphoenix:boat
   /summon renderphoenix:firefighter
+  /summon renderphoenix:tank
   ```
 - **Controls (Helicopter)**:
   - Right-click / tap **Fly Helicopter** to enter the pilot seat.
@@ -147,5 +164,10 @@ update.bat
   - Right-click / tap **Drive Firefighter** to hop into the driver seat at `[0, 4.1, 4.5]`.
   - Steer with **WASD** to drive around.
   - Sneak / Shift to dismount (the fire engine will resume wandering autonomously).
+- **Controls (Tank)**:
+  - Right-click / tap **Drive Tank** to mount the commander hatch on top of the turret at `[0, 4.8, 1.5]`.
+  - Steer with **WASD** to drive across rough terrain.
+  - Look around to aim the rotating villager cannon.
+  - Sneak / Shift to dismount.
 - **Villager Boarding**:
   - Villagers can enter when nearby, or hold an **Emerald** and interact to invite the nearest villager aboard!

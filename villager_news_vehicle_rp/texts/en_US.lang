@@ -10,6 +10,10 @@ item.spawn_egg.entity.renderphoenix:boat.name=Spawn Villager News Boat
 entity.renderphoenix:firefighter.name=Villager News Firefighter
 item.spawn_egg.entity.renderphoenix:firefighter.name=Spawn Villager News Firefighter
 
+entity.renderphoenix:tank.name=Villager News Tank
+item.spawn_egg.entity.renderphoenix:tank.name=Spawn Villager News Tank
+
 action.interact.ride.boat=Board Vehicle
 action.interact.ride.firefighter=Drive Firefighter
+action.interact.ride.tank=Drive Tank
 action.interact.board_villager=Board Nearby Villager
