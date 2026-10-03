@@ -8,7 +8,12 @@
 		"visible_bounds_offset": [0, 5.5, 0],
 		"bones": [
 			{
+				"name": "root",
+				"pivot": [0, 0, 0]
+			},
+			{
 				"name": "boat_down",
+				"parent": "root",
 				"pivot": [0, 0, 2]
 			},
 			{
@@ -607,6 +612,7 @@
 			},
 			{
 				"name": "boat_up",
+				"parent": "root",
 				"pivot": [0, 6, 66]
 			},
 			{

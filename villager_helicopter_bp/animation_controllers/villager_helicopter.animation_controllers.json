@@ -2,10 +2,23 @@
   "format_version": "1.10.0",
   "animation_controllers": {
     "controller.animation.villager_helicopter.flight": {
-      "initial_state": "idle",
+      "initial_state": "grounded",
       "states": {
-        "idle": {
+        "grounded": {
           "transitions": [
+            {
+              "check_rider": "query.has_rider"
+            }
+          ]
+        },
+        "check_rider": {
+          "on_entry": [
+            "/execute as @s[family=!player_piloted] run event entity @s villager_news:villager_takeoff"
+          ],
+          "transitions": [
+            {
+              "grounded": "!query.has_rider"
+            },
             {
               "flying": "query.has_rider"
             }
@@ -14,7 +27,7 @@
         "flying": {
           "transitions": [
             {
-              "idle": "!query.has_rider"
+              "grounded": "!query.has_rider"
             }
           ],
           "on_exit": [
