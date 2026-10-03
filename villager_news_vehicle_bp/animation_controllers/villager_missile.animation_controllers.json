@@ -1,0 +1,49 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.villager_missile.fly": {
+      "initial_state": "flight_a",
+      "states": {
+        "flight_a": {
+          "on_entry": [
+            "/tp @s ^ ^ ^1.6",
+            "/particle minecraft:basic_smoke_particle ^ ^ ^-0.6",
+            "/particle minecraft:campfire_smoke_particle ^ ^ ^-0.8",
+            "/execute as @s at @s unless block ^ ^ ^1.5 air run event entity @s renderphoenix:explode",
+            "/execute as @s at @s if entity @e[r=2.2,type=!player,type=!renderphoenix:tank,type=!renderphoenix:plane,type=!renderphoenix:missile] run event entity @s renderphoenix:explode"
+          ],
+          "transitions": [
+            {
+              "timeout": "query.life_time > 4.5"
+            },
+            {
+              "flight_b": "1.0"
+            }
+          ]
+        },
+        "flight_b": {
+          "on_entry": [
+            "/tp @s ^ ^ ^1.6",
+            "/particle minecraft:basic_smoke_particle ^ ^ ^-0.6",
+            "/particle minecraft:campfire_smoke_particle ^ ^ ^-0.8",
+            "/execute as @s at @s unless block ^ ^ ^1.5 air run event entity @s renderphoenix:explode",
+            "/execute as @s at @s if entity @e[r=2.2,type=!player,type=!renderphoenix:tank,type=!renderphoenix:plane,type=!renderphoenix:missile] run event entity @s renderphoenix:explode"
+          ],
+          "transitions": [
+            {
+              "timeout": "query.life_time > 4.5"
+            },
+            {
+              "flight_a": "1.0"
+            }
+          ]
+        },
+        "timeout": {
+          "on_entry": [
+            "@s renderphoenix:explode"
+          ]
+        }
+      }
+    }
+  }
+}

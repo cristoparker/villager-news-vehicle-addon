@@ -11,40 +11,40 @@
           "position": [0, "math.abs(math.sin(query.modified_distance_moved * 200 + 45)) * 0.12", 0]
         },
         "wheel_r1": {
-          "rotation": [0, 0, "query.modified_distance_moved * 180"]
+          "rotation": ["query.modified_distance_moved * 180", 0, 0]
         },
         "wheel_r2": {
-          "rotation": [0, 0, "query.modified_distance_moved * 180"]
+          "rotation": ["query.modified_distance_moved * 180", 0, 0]
         },
         "wheel_r3": {
-          "rotation": [0, 0, "query.modified_distance_moved * 180"]
+          "rotation": ["query.modified_distance_moved * 180", 0, 0]
         },
         "wheel_r4": {
-          "rotation": [0, 0, "query.modified_distance_moved * 180"]
+          "rotation": ["query.modified_distance_moved * 180", 0, 0]
         },
         "wheel_r_front": {
-          "rotation": [0, 0, "query.modified_distance_moved * 180"]
+          "rotation": ["query.modified_distance_moved * 180", 0, 0]
         },
         "wheel_r_back": {
-          "rotation": [0, 0, "query.modified_distance_moved * 180"]
+          "rotation": ["query.modified_distance_moved * 180", 0, 0]
         },
         "wheel_l1": {
-          "rotation": [0, 0, "-query.modified_distance_moved * 180"]
+          "rotation": ["query.modified_distance_moved * 180", 0, 0]
         },
         "wheel_l2": {
-          "rotation": [0, 0, "-query.modified_distance_moved * 180"]
+          "rotation": ["query.modified_distance_moved * 180", 0, 0]
         },
         "wheel_l3": {
-          "rotation": [0, 0, "-query.modified_distance_moved * 180"]
+          "rotation": ["query.modified_distance_moved * 180", 0, 0]
         },
         "wheel_l4": {
-          "rotation": [0, 0, "-query.modified_distance_moved * 180"]
+          "rotation": ["query.modified_distance_moved * 180", 0, 0]
         },
         "wheel_l_front": {
-          "rotation": [0, 0, "-query.modified_distance_moved * 180"]
+          "rotation": ["query.modified_distance_moved * 180", 0, 0]
         },
         "wheel_l_back": {
-          "rotation": [0, 0, "-query.modified_distance_moved * 180"]
+          "rotation": ["query.modified_distance_moved * 180", 0, 0]
         },
         "tread_r_top1": {
           "position": [0, "math.sin(query.modified_distance_moved * 500) * 0.1", "-math.mod(query.modified_distance_moved * 15.7, 13)"]

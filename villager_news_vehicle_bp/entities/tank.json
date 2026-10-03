@@ -59,7 +59,11 @@
           {
             "width": 5.0,
             "height": 4.0,
-            "pivot": [0, 2.0, 0.2]
+            "pivot": [
+              0,
+              2.0,
+              0.2
+            ]
           }
         ]
       },
@@ -69,6 +73,26 @@
       },
       "minecraft:damage_sensor": {
         "triggers": [
+          {
+            "on_damage": {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "is_family",
+                    "subject": "other",
+                    "value": "player"
+                  },
+                  {
+                    "test": "is_riding_self",
+                    "subject": "other",
+                    "value": true
+                  }
+                ]
+              },
+              "event": "renderphoenix:shoot_missile"
+            },
+            "deals_damage": false
+          },
           {
             "cause": "fall",
             "deals_damage": false
@@ -124,7 +148,11 @@
         "controlling_seat": 0,
         "seats": [
           {
-            "position": [0, 4.8, 1.5],
+            "position": [
+              0,
+              3.7,
+              3.3
+            ],
             "min_rider_count": 0,
             "max_rider_count": 1
           }
@@ -132,6 +160,15 @@
       }
     },
     "events": {
+      "renderphoenix:shoot_missile": {
+        "queue_command": {
+          "command": [
+            "playsound random.bow @a ~ ~ ~ 1.5 0.5",
+            "playsound random.explode @a ~ ~ ~ 0.8 1.8",
+            "particle minecraft:basic_smoke_particle ^ ^ ^3"
+          ]
+        }
+      },
       "minecraft:entity_spawned": {
         "add": {
           "component_groups": [

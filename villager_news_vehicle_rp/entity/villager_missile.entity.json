@@ -1,0 +1,31 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "renderphoenix:missile",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/villager_helicopter/farmer"
+      },
+      "geometry": {
+        "default": "geometry.renderphoenix.missile"
+      },
+      "animations": {
+        "flying": "animation.villager_missile.flying"
+      },
+      "particle_effects": {
+        "smoke": "minecraft:basic_smoke_particle"
+      },
+      "scripts": {
+        "animate": [
+          "flying"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.villager_missile"
+      ]
+    }
+  }
+}

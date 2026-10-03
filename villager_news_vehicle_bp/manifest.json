@@ -2,23 +2,41 @@
   "format_version": 2,
   "header": {
     "name": "Villager News Vehicle Addon BP",
-    "description": "Villager News Vehicle Addon Behavior Pack - Features the iconic Villager Helicopter and Villager Boat!",
-    "uuid": "fd8eb624-06ee-4c55-9017-6c912384b44d",
-    "version": [1, 0, 0],
-    "min_engine_version": [1, 20, 0]
+    "description": "Villager News Vehicle Addon Behavior Pack - Features the iconic Villager Helicopter, Boat, Tank, Firefighter Car, and Daladas Plane!",
+    "uuid": "eef8942e-33f1-461a-afb5-c89c90d34400",
+    "version": [1, 2, 0],
+    "min_engine_version": [1, 21, 0]
   },
   "modules": [
     {
       "description": "Villager News Vehicle Addon Behaviors",
       "type": "data",
-      "uuid": "10a6372b-4ef3-4132-98fa-8ab16d9f1195",
-      "version": [1, 0, 0]
+      "uuid": "95f1495a-c0d9-494e-b9a9-e6ee83d5893c",
+      "version": [1, 2, 0]
+    },
+    {
+      "description": "Villager News Vehicle Addon Scripting",
+      "type": "script",
+      "language": "javascript",
+      "uuid": "725ad994-433a-42dd-a93d-ae2d7267e699",
+      "version": [1, 2, 0],
+      "entry": "scripts/main.js"
     }
   ],
   "dependencies": [
     {
-      "uuid": "2b118c07-1906-4aa0-b67a-cc80dba4d971",
-      "version": [1, 0, 0]
+      "uuid": "7ac73f6a-9584-4d4f-b201-7be43f4d7e7e",
+      "version": [1, 2, 0]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.1.0"
     }
-  ]
+  ],
+  "metadata": {
+    "product_type": "addon",
+    "authors": [
+      "Element Animation & RenderPhoenix"
+    ]
+  }
 }

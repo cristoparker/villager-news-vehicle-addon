@@ -5,16 +5,16 @@
       "loop": true,
       "bones": {
         "wheel1": {
-          "rotation": [0, 0, "query.modified_distance_moved * 150"]
+          "rotation": ["query.modified_distance_moved * 150", 0, 0]
         },
         "wheel2": {
-          "rotation": [0, 0, "query.modified_distance_moved * 150"]
+          "rotation": ["query.modified_distance_moved * 150", 0, 0]
         },
         "wheel3": {
-          "rotation": [0, 0, "-query.modified_distance_moved * 150"]
+          "rotation": ["query.modified_distance_moved * 150", 0, 0]
         },
         "wheel4": {
-          "rotation": [0, 0, "-query.modified_distance_moved * 150"]
+          "rotation": ["query.modified_distance_moved * 150", 0, 0]
         }
       }
     },

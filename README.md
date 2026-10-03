@@ -52,9 +52,9 @@ An authentic, fully-featured **Villager News Vehicle Addon** for Minecraft Bedro
   - The front villager head actively looks at players when nearby (`minecraft:behavior.look_at_player`) and glances around randomly (`minecraft:behavior.random_look_around`).
   - Head rotation animation tracks entity target pitch and yaw (`query.target_x_rotation`, `query.target_y_rotation`).
 - **Smooth 4-Wheel Rotation Animation**:
-  - All 4 wheels (`wheel1`, `wheel2`, `wheel3`, `wheel4`) physically rotate as the vehicle moves along the ground using `query.modified_distance_moved`.
-- **Natural Overworld Spawning**:
-  - Naturally spawns on surface grass blocks in the Overworld and wanders around autonomously (`minecraft:behavior.random_stroll`).
+  - All 4 wheels (`wheel1`, `wheel2`, `wheel3`, `wheel4`) physically rotate forward along the X-axis axle as the vehicle moves along the ground using `query.modified_distance_moved`.
+- **Spawn Egg / Command Summoning**:
+  - Does not spawn randomly or naturally in the Overworld, keeping worlds clean. Spawnable via Spawn Egg or `/summon renderphoenix:firefighter`.
 - **Driveable by Player**:
   - Hop aboard into the driver's seat at `[0, 4.1, 4.5]` and steer smoothly using **WASD** ground controls.
   - Safely steps over 1-block terrain obstacles (`minecraft:step_height: 1.06`).
@@ -68,10 +68,12 @@ An authentic, fully-featured **Villager News Vehicle Addon** for Minecraft Bedro
 - **Iconic 3D Model**: 231-bone authentic reconstruction straight from *Villager News: WAR!*, featuring the arched villager cannon, rotating turret (`tank_head`), and dual caterpillar tracks made of villagers chanting *"I am a wheel!"*.
 - **Authentic Villager Wheels & Tracks**:
   - Full oval tread loop on each side complete with front idler curves, ground treads, top return runs, and rear sprocket curves.
-  - 8 rotating road wheels (`wheel_r1`..`wheel_r4`, `wheel_l1`..`wheel_l4`) and sprocket wheels that spin dynamically as the tank travels (`query.modified_distance_moved`).
+  - 8 rotating road wheels (`wheel_r1`..`wheel_r4`, `wheel_l1`..`wheel_l4`) and sprocket wheels that roll along their pitch axis as the tank travels (`query.modified_distance_moved`).
   - Full 46-bone caterpillar tread and track chain conveyor animation moving in sync with road wheels.
-- **Aiming Turret**:
+- **Aiming Turret & Missile Launcher**:
   - Turret and arched cannon smoothly track target yaw (`query.target_y_rotation`) to aim where you look.
+  - **Shoot Villager Missiles**: Right-click / tap while driving to launch a Villager Missile straight in the direction you are looking!
+  - Missiles fly at high speed with billowing smoke trails and detonate on impact with a massive explosion!
 - **Driveable Heavy Armor**:
   - Heavy armored chassis (200 HP) with `step_height: 1.06` to crawl over obstacles.
   - Mount the commander's hatch on top of the turret at `[0, 4.8, 1.5]` to command and drive across the terrain.
@@ -88,6 +90,8 @@ An authentic, fully-featured **Villager News Vehicle Addon** for Minecraft Bedro
   - Cockpit seat positioned precisely at `[0, 0.3, 5]`.
   - Steer in 3D air space with WASD controls, holding jump to climb altitude.
   - Smooth landing physics with gravity re-engaging upon player dismount.
+- **Air-to-Ground Missile Cannon**:
+  - Right-click / tap while flying to launch Villager Missiles in the direction you look!
 - **Hitbox**:
   - Custom hit test: `width: 3.7`, `height: 2.0`, `pivot: [0, 1, 0]`.
 

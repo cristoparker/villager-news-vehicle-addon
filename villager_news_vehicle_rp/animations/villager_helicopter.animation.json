@@ -6,7 +6,7 @@
       "animation_length": 1.0,
       "bones": {
         "main_propeller": {
-          "rotation": [0, 0, "query.life_time * 1440"]
+          "rotation": [0, "query.life_time * 1440", 0]
         },
         "back_propeller": {
           "rotation": ["query.life_time * 1440", 0, 0]

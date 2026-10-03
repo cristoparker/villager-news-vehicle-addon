@@ -59,7 +59,11 @@
           {
             "width": 3.4,
             "height": 3.5,
-            "pivot": [0, 1.75, 0.9]
+            "pivot": [
+              0,
+              1.75,
+              0.9
+            ]
           }
         ]
       },
@@ -124,7 +128,11 @@
         "controlling_seat": 0,
         "seats": [
           {
-            "position": [0, 4.1, 4.5],
+            "position": [
+              0,
+              4.1,
+              4.5
+            ],
             "min_rider_count": 0,
             "max_rider_count": 1
           }

@@ -1,0 +1,14 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.villager_missile.flying": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": [90, 0, "query.life_time * 720"],
+          "position": [0, -12, 0]
+        }
+      }
+    }
+  }
+}

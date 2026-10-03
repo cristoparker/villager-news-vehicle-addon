@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.80",
+  "minecraft:item": {
+    "description": {
+      "identifier": "renderphoenix:plane",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:max_stack_size": {
+        "value": 1
+      },
+      "minecraft:icon": {
+        "textures": {
+          "default": "renderphoenix_plane"
+        }
+      },
+      "minecraft:liquid_clipped": {
+        "value": true
+      },
+      "minecraft:entity_placer": {
+        "entity": "renderphoenix:plane"
+      }
+    }
+  }
+}
