@@ -1,17 +1,17 @@
 @echo off
 setlocal enabledelayedexpansion
 
-title Villager News Helicopter - Addon Updater
+title Villager News Vehicle Addon - Sync Tool
 
 echo ==============================================================================
-echo    VILLAGER NEWS HELICOPTER - MOJANG DEVELOPMENT PACK SYNC TOOL
+echo    VILLAGER NEWS VEHICLE ADDON - MOJANG DEVELOPMENT PACK SYNC TOOL
 echo ==============================================================================
 echo.
 
 :: Determine source directories
 set "SOURCE_DIR=%~dp0"
-set "BP_SRC=%SOURCE_DIR%villager_helicopter_bp"
-set "RP_SRC=%SOURCE_DIR%villager_helicopter_rp"
+set "BP_SRC=%SOURCE_DIR%villager_news_vehicle_bp"
+set "RP_SRC=%SOURCE_DIR%villager_news_vehicle_rp"
 
 if not exist "%BP_SRC%" (
     echo [ERROR] Behavior Pack folder not found at: %BP_SRC%
@@ -61,8 +61,16 @@ echo [TARGET] com.mojang path detected:
 echo          %MOJANG_DIR%
 echo.
 
-set "DEV_BP=%MOJANG_DIR%\development_behavior_packs\villager_helicopter_bp"
-set "DEV_RP=%MOJANG_DIR%\development_resource_packs\villager_helicopter_rp"
+:: Clean up old deprecated helicopter-only pack folders if present
+if exist "%MOJANG_DIR%\development_behavior_packs\villager_helicopter_bp" (
+    rmdir /s /q "%MOJANG_DIR%\development_behavior_packs\villager_helicopter_bp" 2>nul
+)
+if exist "%MOJANG_DIR%\development_resource_packs\villager_helicopter_rp" (
+    rmdir /s /q "%MOJANG_DIR%\development_resource_packs\villager_helicopter_rp" 2>nul
+)
+
+set "DEV_BP=%MOJANG_DIR%\development_behavior_packs\villager_news_vehicle_bp"
+set "DEV_RP=%MOJANG_DIR%\development_resource_packs\villager_news_vehicle_rp"
 
 echo [1/2] Syncing Behavior Pack...
 echo       From: %BP_SRC%
@@ -89,7 +97,8 @@ echo       ^-- Resource Pack updated successfully!
 echo.
 
 echo ==============================================================================
-echo [SUCCESS] Both packs updated in com.mojang development folders!
+echo [SUCCESS] Villager News Vehicle Addon updated in com.mojang!
+echo           Vehicles included: Villager Helicopter and Villager Boat
 echo           Ready to test in Minecraft Bedrock Edition!
 echo ==============================================================================
 echo.

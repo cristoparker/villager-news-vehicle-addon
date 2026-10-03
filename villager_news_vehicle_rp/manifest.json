@@ -1,15 +1,15 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Villager News Helicopter RP",
-    "description": "Villager News Helicopter Resource Pack with custom 3D model, farmer texture, and rotating propeller animations.",
+    "name": "Villager News Vehicle Addon RP",
+    "description": "Villager News Vehicle Addon Resource Pack with custom 3D models, textures, and animations for Villager Helicopter and Villager Boat.",
     "uuid": "2b118c07-1906-4aa0-b67a-cc80dba4d971",
     "version": [1, 0, 0],
     "min_engine_version": [1, 20, 0]
   },
   "modules": [
     {
-      "description": "Villager News Helicopter Resources",
+      "description": "Villager News Vehicle Addon Resources",
       "type": "resources",
       "uuid": "f741647c-22a7-44d5-adf3-23a0d8c47d4d",
       "version": [1, 0, 0]

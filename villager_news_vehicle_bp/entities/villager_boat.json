@@ -1,0 +1,228 @@
+{
+  "format_version": "1.20.80",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "villager_news:boat",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "component_groups": {
+      "villager_news:boat_player_pilot": {
+        "minecraft:input_ground_controlled": {},
+        "minecraft:movement": {
+          "value": 0.5
+        }
+      },
+      "villager_news:boat_villager_pilot": {
+        "minecraft:movement": {
+          "value": 0.35
+        },
+        "minecraft:behavior.random_stroll": {
+          "priority": 1,
+          "speed_multiplier": 1.0
+        },
+        "minecraft:behavior.random_look_around": {
+          "priority": 2
+        }
+      }
+    },
+    "components": {
+      "minecraft:is_hidden_when_invisible": {},
+      "minecraft:type_family": {
+        "family": [
+          "villager_boat",
+          "boat",
+          "inanimate",
+          "vehicle"
+        ]
+      },
+      "minecraft:collision_box": {
+        "width": 3.8,
+        "height": 2.2
+      },
+      "minecraft:custom_hit_test": {
+        "hitboxes": [
+          {
+            "width": 3.8,
+            "height": 2.2,
+            "pivot": [0, 1.1, 0]
+          }
+        ]
+      },
+      "minecraft:health": {
+        "value": 100,
+        "max": 100
+      },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "cause": "fall",
+            "deals_damage": false
+          },
+          {
+            "cause": "drowning",
+            "deals_damage": false
+          },
+          {
+            "cause": "suffocation",
+            "deals_damage": false
+          }
+        ]
+      },
+      "minecraft:knockback_resistance": {
+        "value": 1.0
+      },
+      "minecraft:physics": {
+        "has_gravity": true,
+        "has_collision": true
+      },
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:buoyant": {
+        "base_buoyancy": 1.0,
+        "apply_gravity": true,
+        "simulate_waves": true,
+        "liquid_blocks": [
+          "minecraft:water",
+          "minecraft:flowing_water"
+        ]
+      },
+      "minecraft:movement": {
+        "value": 0.45
+      },
+      "minecraft:movement.basic": {},
+      "minecraft:navigation.generic": {
+        "is_amphibious": true,
+        "can_path_over_water": true,
+        "can_swim": true
+      },
+      "minecraft:rideable": {
+        "seat_count": 2,
+        "family_types": [
+          "player",
+          "villager"
+        ],
+        "interact_text": "action.interact.ride.boat",
+        "controlling_seat": 0,
+        "seats": [
+          {
+            "position": [0, 0.4, -0.6],
+            "min_rider_count": 0,
+            "max_rider_count": 1
+          },
+          {
+            "position": [0, 0.4, 0.8],
+            "min_rider_count": 1,
+            "max_rider_count": 2
+          }
+        ]
+      },
+      "minecraft:interact": {
+        "interactions": [
+          {
+            "interact_text": "action.interact.ride.boat",
+            "on_interact": {
+              "filters": {
+                "test": "is_family",
+                "subject": "other",
+                "value": "player"
+              },
+              "event": "villager_news:boat_player_mount"
+            }
+          },
+          {
+            "interact_text": "action.interact.board_villager",
+            "on_interact": {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_equipment",
+                    "subject": "other",
+                    "domain": "hand",
+                    "value": "emerald"
+                  },
+                  {
+                    "test": "has_rider",
+                    "subject": "self",
+                    "value": false
+                  }
+                ]
+              },
+              "event": "villager_news:boat_board_nearby_villager"
+            }
+          }
+        ]
+      },
+      "minecraft:entity_sensor": {
+        "sensor_range": 3.0,
+        "relative_range": false,
+        "event_filters": {
+          "all_of": [
+            {
+              "test": "has_rider",
+              "subject": "self",
+              "value": false
+            },
+            {
+              "test": "is_family",
+              "subject": "other",
+              "value": "villager"
+            }
+          ]
+        },
+        "event": "villager_news:boat_villager_mount"
+      }
+    },
+    "events": {
+      "villager_news:boat_player_mount": {
+        "remove": {
+          "component_groups": [
+            "villager_news:boat_villager_pilot"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "villager_news:boat_player_pilot"
+          ]
+        }
+      },
+      "villager_news:boat_villager_mount": {
+        "run_command": {
+          "command": [
+            "/ride @e[type=villager,r=3.5,c=1] start_riding @s"
+          ]
+        },
+        "remove": {
+          "component_groups": [
+            "villager_news:boat_player_pilot"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "villager_news:boat_villager_pilot"
+          ]
+        }
+      },
+      "villager_news:boat_board_nearby_villager": {
+        "run_command": {
+          "command": [
+            "/ride @e[type=villager,r=6,c=1] start_riding @s"
+          ]
+        },
+        "remove": {
+          "component_groups": [
+            "villager_news:boat_player_pilot"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "villager_news:boat_villager_pilot"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,15 +1,15 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Villager News Helicopter BP",
-    "description": "Villager News Helicopter Behavior Pack with player flight control, villager pilot flight AI, and custom hitboxes.",
+    "name": "Villager News Vehicle Addon BP",
+    "description": "Villager News Vehicle Addon Behavior Pack - Features the iconic Villager Helicopter and Villager Boat!",
     "uuid": "fd8eb624-06ee-4c55-9017-6c912384b44d",
     "version": [1, 0, 0],
     "min_engine_version": [1, 20, 0]
   },
   "modules": [
     {
-      "description": "Villager News Helicopter Behaviors",
+      "description": "Villager News Vehicle Addon Behaviors",
       "type": "data",
       "uuid": "10a6372b-4ef3-4132-98fa-8ab16d9f1195",
       "version": [1, 0, 0]

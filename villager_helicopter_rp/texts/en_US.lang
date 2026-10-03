@@ -1,4 +1,0 @@
-entity.villager_news:helicopter.name=Villager News Helicopter
-item.spawn_egg.entity.villager_news:helicopter.name=Spawn Villager News Helicopter
-action.interact.board_villager=Board Nearby Villager
-action.interact.ride.boat=Fly Helicopter

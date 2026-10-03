@@ -1,0 +1,24 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "villager_news:boat",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/villager_helicopter/farmer"
+      },
+      "geometry": {
+        "default": "geometry.villager_boat"
+      },
+      "render_controllers": [
+        "controller.render.villager_boat"
+      ],
+      "spawn_egg": {
+        "base_color": "#3b6b28",
+        "overlay_color": "#1f4e79"
+      }
+    }
+  }
+}
