@@ -98,7 +98,7 @@ echo.
 
 echo ==============================================================================
 echo [SUCCESS] Villager News Vehicle Addon updated in com.mojang!
-echo           Vehicles included: Villager Helicopter and Villager Boat
+echo           Vehicles included: Villager Helicopter, Villager Boat, and Firefighter Car
 echo           Ready to test in Minecraft Bedrock Edition!
 echo ==============================================================================
 echo.

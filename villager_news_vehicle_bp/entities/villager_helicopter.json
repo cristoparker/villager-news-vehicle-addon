@@ -2,7 +2,7 @@
   "format_version": "1.20.80",
   "minecraft:entity": {
     "description": {
-      "identifier": "villager_news:helicopter",
+      "identifier": "renderphoenix:helicopter",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
@@ -16,7 +16,7 @@
       }
     },
     "component_groups": {
-      "villager_news:grounded": {
+      "renderphoenix:grounded": {
         "minecraft:physics": {
           "has_gravity": true,
           "has_collision": true
@@ -25,7 +25,7 @@
           "value": 0.0
         }
       },
-      "villager_news:player_flight": {
+      "renderphoenix:player_flight": {
         "minecraft:type_family": {
           "family": [
             "villager_helicopter",
@@ -57,7 +57,7 @@
           "vertical_velocity": 0.6
         }
       },
-      "villager_news:villager_flight": {
+      "renderphoenix:villager_flight": {
         "minecraft:type_family": {
           "family": [
             "villager_helicopter",
@@ -168,7 +168,7 @@
                 "subject": "other",
                 "value": "player"
               },
-              "event": "villager_news:player_mount"
+              "event": "renderphoenix:player_mount"
             }
           },
           {
@@ -189,7 +189,7 @@
                   }
                 ]
               },
-              "event": "villager_news:board_nearby_villager"
+              "event": "renderphoenix:board_nearby_villager"
             }
           }
         ]
@@ -211,31 +211,31 @@
             }
           ]
         },
-        "event": "villager_news:villager_mount"
+        "event": "renderphoenix:villager_mount"
       }
     },
     "events": {
       "minecraft:entity_spawned": {
         "add": {
           "component_groups": [
-            "villager_news:grounded"
+            "renderphoenix:grounded"
           ]
         }
       },
-      "villager_news:player_mount": {
+      "renderphoenix:player_mount": {
         "remove": {
           "component_groups": [
-            "villager_news:grounded",
-            "villager_news:villager_flight"
+            "renderphoenix:grounded",
+            "renderphoenix:villager_flight"
           ]
         },
         "add": {
           "component_groups": [
-            "villager_news:player_flight"
+            "renderphoenix:player_flight"
           ]
         }
       },
-      "villager_news:villager_mount": {
+      "renderphoenix:villager_mount": {
         "run_command": {
           "command": [
             "/ride @e[type=villager,r=3.5,c=1] start_riding @s"
@@ -243,30 +243,30 @@
         },
         "remove": {
           "component_groups": [
-            "villager_news:grounded",
-            "villager_news:player_flight"
+            "renderphoenix:grounded",
+            "renderphoenix:player_flight"
           ]
         },
         "add": {
           "component_groups": [
-            "villager_news:villager_flight"
+            "renderphoenix:villager_flight"
           ]
         }
       },
-      "villager_news:villager_takeoff": {
+      "renderphoenix:villager_takeoff": {
         "remove": {
           "component_groups": [
-            "villager_news:grounded",
-            "villager_news:player_flight"
+            "renderphoenix:grounded",
+            "renderphoenix:player_flight"
           ]
         },
         "add": {
           "component_groups": [
-            "villager_news:villager_flight"
+            "renderphoenix:villager_flight"
           ]
         }
       },
-      "villager_news:board_nearby_villager": {
+      "renderphoenix:board_nearby_villager": {
         "run_command": {
           "command": [
             "/ride @e[type=villager,r=6,c=1] start_riding @s"
@@ -274,26 +274,26 @@
         },
         "remove": {
           "component_groups": [
-            "villager_news:grounded",
-            "villager_news:player_flight"
+            "renderphoenix:grounded",
+            "renderphoenix:player_flight"
           ]
         },
         "add": {
           "component_groups": [
-            "villager_news:villager_flight"
+            "renderphoenix:villager_flight"
           ]
         }
       },
-      "villager_news:on_dismount": {
+      "renderphoenix:on_dismount": {
         "remove": {
           "component_groups": [
-            "villager_news:player_flight",
-            "villager_news:villager_flight"
+            "renderphoenix:player_flight",
+            "renderphoenix:villager_flight"
           ]
         },
         "add": {
           "component_groups": [
-            "villager_news:grounded"
+            "renderphoenix:grounded"
           ]
         }
       }

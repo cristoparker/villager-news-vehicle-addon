@@ -2,19 +2,19 @@
   "format_version": "1.20.80",
   "minecraft:entity": {
     "description": {
-      "identifier": "villager_news:boat",
+      "identifier": "renderphoenix:boat",
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false
     },
     "component_groups": {
-      "villager_news:boat_player_pilot": {
+      "renderphoenix:boat_player_pilot": {
         "minecraft:input_ground_controlled": {},
         "minecraft:movement": {
           "value": 0.5
         }
       },
-      "villager_news:boat_villager_pilot": {
+      "renderphoenix:boat_villager_pilot": {
         "minecraft:movement": {
           "value": 0.35
         },
@@ -38,13 +38,13 @@
         ]
       },
       "minecraft:collision_box": {
-        "width": 3.8,
+        "width": 3,
         "height": 2.2
       },
       "minecraft:custom_hit_test": {
         "hitboxes": [
           {
-            "width": 3.8,
+            "width": 3,
             "height": 2.2,
             "pivot": [0, 1.1, 0]
           }
@@ -100,7 +100,7 @@
         "can_swim": true
       },
       "minecraft:rideable": {
-        "seat_count": 2,
+        "seat_count": 4,
         "family_types": [
           "player",
           "villager"
@@ -109,14 +109,24 @@
         "controlling_seat": 0,
         "seats": [
           {
-            "position": [0, 0.4, -0.6],
+            "position": [0, 0.5, 1.7],
             "min_rider_count": 0,
             "max_rider_count": 1
           },
           {
-            "position": [0, 0.4, 0.8],
+            "position": [0, 0.5, -0.5],
             "min_rider_count": 1,
             "max_rider_count": 2
+          },
+          {
+            "position": [0, 0.5, -2],
+            "min_rider_count": 2,
+            "max_rider_count": 3
+          },
+          {
+            "position": [0, 0.5, -3],
+            "min_rider_count": 3,
+            "max_rider_count": 4
           }
         ]
       },
@@ -130,7 +140,7 @@
                 "subject": "other",
                 "value": "player"
               },
-              "event": "villager_news:boat_player_mount"
+              "event": "renderphoenix:boat_player_mount"
             }
           },
           {
@@ -145,13 +155,14 @@
                     "value": "emerald"
                   },
                   {
-                    "test": "has_rider",
+                    "test": "rider_count",
                     "subject": "self",
-                    "value": false
+                    "operator": "<",
+                    "value": 4
                   }
                 ]
               },
-              "event": "villager_news:boat_board_nearby_villager"
+              "event": "renderphoenix:boat_board_nearby_villager"
             }
           }
         ]
@@ -173,23 +184,23 @@
             }
           ]
         },
-        "event": "villager_news:boat_villager_mount"
+        "event": "renderphoenix:boat_villager_mount"
       }
     },
     "events": {
-      "villager_news:boat_player_mount": {
+      "renderphoenix:boat_player_mount": {
         "remove": {
           "component_groups": [
-            "villager_news:boat_villager_pilot"
+            "renderphoenix:boat_villager_pilot"
           ]
         },
         "add": {
           "component_groups": [
-            "villager_news:boat_player_pilot"
+            "renderphoenix:boat_player_pilot"
           ]
         }
       },
-      "villager_news:boat_villager_mount": {
+      "renderphoenix:boat_villager_mount": {
         "run_command": {
           "command": [
             "/ride @e[type=villager,r=3.5,c=1] start_riding @s"
@@ -197,29 +208,19 @@
         },
         "remove": {
           "component_groups": [
-            "villager_news:boat_player_pilot"
+            "renderphoenix:boat_player_pilot"
           ]
         },
         "add": {
           "component_groups": [
-            "villager_news:boat_villager_pilot"
+            "renderphoenix:boat_villager_pilot"
           ]
         }
       },
-      "villager_news:boat_board_nearby_villager": {
+      "renderphoenix:boat_board_nearby_villager": {
         "run_command": {
           "command": [
             "/ride @e[type=villager,r=6,c=1] start_riding @s"
-          ]
-        },
-        "remove": {
-          "component_groups": [
-            "villager_news:boat_player_pilot"
-          ]
-        },
-        "add": {
-          "component_groups": [
-            "villager_news:boat_villager_pilot"
           ]
         }
       }

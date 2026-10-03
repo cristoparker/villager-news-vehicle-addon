@@ -9,7 +9,7 @@ An authentic, fully-featured **Villager News Vehicle Addon** for Minecraft Bedro
 
 ## ✨ Included Vehicles & Features
 
-### 1. 🚁 Villager News Helicopter (`villager_news:helicopter`)
+### 1. 🚁 Villager News Helicopter (`renderphoenix:helicopter`)
 - **Iconic 3D Model**: 171-bone full custom model made of villagers linked together into a helicopter chassis.
 - **Animated Dual Propellers**:
   - **Main Rotor (`main_propeller`)**: Quad-villager rotor blades spinning smoothly horizontally in the X-Z plane at high RPM.
@@ -29,18 +29,38 @@ An authentic, fully-featured **Villager News Vehicle Addon** for Minecraft Bedro
 
 ---
 
-### 2. 🚤 Villager News Boat (`villager_news:boat`)
+### 2. 🚤 Villager News Boat (`renderphoenix:boat`)
 - **Massive 3D Model**: 217-bone full custom model made of villagers lying horizontally to form the hull floor (`boat_down`) and standing to form the bow, stern, and sides (`boat_up`).
 - **Water Buoyancy**:
   - Floats and slides realistically on water and flowing water with wave simulation (`minecraft:buoyant`).
-- **Dual Seating (2-Seater)**:
-  - **Captain's Seat (Pilot)**: `[0, 0.4, -0.6]`
-  - **Passenger Seat**: `[0, 0.4, 0.8]`
+- **Multi-Seater (4 Seats)**:
+  - **Captain's Seat (Main Rider/Control)**: `[0, 0.5, 1.7]`
+  - **Passenger Seat 2**: `[0, 0.5, -0.5]`
+  - **Passenger Seat 3**: `[0, 0.5, -2]`
+  - **Passenger Seat 4**: `[0, 0.5, -3]`
 - **Steering & Propulsion**:
   - Direct player rudder/ground control with WASD when seated in the pilot seat.
-  - Villagers can also ride along or pilot the boat!
+  - Villagers can also ride along in passenger seats or pilot the boat!
 - **Hitbox**:
-  - Custom hit test: `width: 3.8`, `height: 2.2`, `pivot: [0, 1.1, 0]`.
+  - Custom hit test: `width: 3`, `height: 2.2`, `pivot: [0, 1.1, 0]`.
+
+---
+
+### 3. 🚒 Villager News Firefighter Car (`renderphoenix:firefighter`)
+- **Iconic 3D Model**: Massive custom fire engine constructed entirely out of villagers, complete with a rooftop ladder pipe and 4 rolling villager-head wheels.
+- **Dynamic Head & Looking AI**:
+  - The front villager head actively looks at players when nearby (`minecraft:behavior.look_at_player`) and glances around randomly (`minecraft:behavior.random_look_around`).
+  - Head rotation animation tracks entity target pitch and yaw (`query.target_x_rotation`, `query.target_y_rotation`).
+- **Smooth 4-Wheel Rotation Animation**:
+  - All 4 wheels (`wheel1`, `wheel2`, `wheel3`, `wheel4`) physically rotate as the vehicle moves along the ground using `query.modified_distance_moved`.
+- **Natural Overworld Spawning**:
+  - Naturally spawns on surface grass blocks in the Overworld and wanders around autonomously (`minecraft:behavior.random_stroll`).
+- **Driveable by Player**:
+  - Hop aboard into the driver's seat at `[0, 4.1, 4.5]` and steer smoothly using **WASD** ground controls.
+  - Safely steps over 1-block terrain obstacles (`minecraft:step_height: 1.06`).
+  - Automatically switches back to wandering AI when the player dismounts.
+- **Hitbox**:
+  - Custom hit test: `width: 3.4`, `height: 3.5`, `pivot: [0, 1.75, 0.9]`.
 
 ---
 
@@ -107,10 +127,12 @@ update.bat
 - **Creative Spawn Eggs**:
   - 🚁 **Villager News Helicopter Spawn Egg**
   - 🚤 **Villager News Boat Spawn Egg**
+  - 🚒 **Villager News Firefighter Spawn Egg**
 - **Commands**:
   ```mcfunction
-  /summon villager_news:helicopter
-  /summon villager_news:boat
+  /summon renderphoenix:helicopter
+  /summon renderphoenix:boat
+  /summon renderphoenix:firefighter
   ```
 - **Controls (Helicopter)**:
   - Right-click / tap **Fly Helicopter** to enter the pilot seat.
@@ -121,5 +143,9 @@ update.bat
   - Right-click / tap **Board Vehicle** to enter.
   - Use **WASD** to steer across rivers and oceans.
   - Sneak / Shift to dismount.
+- **Controls (Firefighter)**:
+  - Right-click / tap **Drive Firefighter** to hop into the driver seat at `[0, 4.1, 4.5]`.
+  - Steer with **WASD** to drive around.
+  - Sneak / Shift to dismount (the fire engine will resume wandering autonomously).
 - **Villager Boarding**:
   - Villagers can enter when nearby, or hold an **Emerald** and interact to invite the nearest villager aboard!

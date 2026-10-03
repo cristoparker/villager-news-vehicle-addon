@@ -1,0 +1,30 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.firefighter.wheels": {
+      "loop": true,
+      "bones": {
+        "wheel1": {
+          "rotation": [0, 0, "query.modified_distance_moved * 150"]
+        },
+        "wheel2": {
+          "rotation": [0, 0, "query.modified_distance_moved * 150"]
+        },
+        "wheel3": {
+          "rotation": [0, 0, "-query.modified_distance_moved * 150"]
+        },
+        "wheel4": {
+          "rotation": [0, 0, "-query.modified_distance_moved * 150"]
+        }
+      }
+    },
+    "animation.firefighter.look_at_target": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0]
+        }
+      }
+    }
+  }
+}

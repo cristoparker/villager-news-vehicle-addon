@@ -13,7 +13,7 @@
         },
         "check_rider": {
           "on_entry": [
-            "/execute as @s[family=!player_piloted] run event entity @s villager_news:villager_takeoff"
+            "/execute as @s[family=!player_piloted] run event entity @s renderphoenix:villager_takeoff"
           ],
           "transitions": [
             {
@@ -31,7 +31,7 @@
             }
           ],
           "on_exit": [
-            "@s villager_news:on_dismount"
+            "@s renderphoenix:on_dismount"
           ]
         }
       }

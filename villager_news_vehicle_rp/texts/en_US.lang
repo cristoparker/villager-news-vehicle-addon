@@ -1,11 +1,15 @@
 pack.name=Villager News Vehicle Addon
 pack.description=Villager News Vehicle Addon featuring the Villager Helicopter and Villager Boat!
 
-entity.villager_news:helicopter.name=Villager News Helicopter
-item.spawn_egg.entity.villager_news:helicopter.name=Spawn Villager News Helicopter
+entity.renderphoenix:helicopter.name=Villager News Helicopter
+item.spawn_egg.entity.renderphoenix:helicopter.name=Spawn Villager News Helicopter
 
-entity.villager_news:boat.name=Villager News Boat
-item.spawn_egg.entity.villager_news:boat.name=Spawn Villager News Boat
+entity.renderphoenix:boat.name=Villager News Boat
+item.spawn_egg.entity.renderphoenix:boat.name=Spawn Villager News Boat
+
+entity.renderphoenix:firefighter.name=Villager News Firefighter
+item.spawn_egg.entity.renderphoenix:firefighter.name=Spawn Villager News Firefighter
 
 action.interact.ride.boat=Board Vehicle
+action.interact.ride.firefighter=Drive Firefighter
 action.interact.board_villager=Board Nearby Villager

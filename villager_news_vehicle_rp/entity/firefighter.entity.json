@@ -2,7 +2,7 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "renderphoenix:helicopter",
+      "identifier": "renderphoenix:firefighter",
       "materials": {
         "default": "entity_alphatest"
       },
@@ -10,22 +10,24 @@
         "default": "textures/entity/villager_helicopter/farmer"
       },
       "geometry": {
-        "default": "geometry.villager_helicopter"
+        "default": "geometry.villager_firefighter"
       },
       "animations": {
-        "propellers": "animation.villager_helicopter.propellers"
+        "wheels": "animation.firefighter.wheels",
+        "look_at_target": "animation.firefighter.look_at_target"
       },
       "scripts": {
         "animate": [
-          "propellers"
+          "wheels",
+          "look_at_target"
         ]
       },
       "render_controllers": [
-        "controller.render.villager_helicopter"
+        "controller.render.firefighter"
       ],
       "spawn_egg": {
-        "base_color": "#633c1d",
-        "overlay_color": "#4a8522"
+        "base_color": "#b01b1b",
+        "overlay_color": "#f5cd2f"
       }
     }
   }
