@@ -68,7 +68,8 @@ An authentic, fully-featured **Villager News Vehicle Addon** for Minecraft Bedro
 - **Iconic 3D Model**: 231-bone authentic reconstruction straight from *Villager News: WAR!*, featuring the arched villager cannon, rotating turret (`tank_head`), and dual caterpillar tracks made of villagers chanting *"I am a wheel!"*.
 - **Authentic Villager Wheels & Tracks**:
   - Full oval tread loop on each side complete with front idler curves, ground treads, top return runs, and rear sprocket curves.
-  - 8 rotating road wheels (`wheel_r1`..`wheel_r4`, `wheel_l1`..`wheel_l4`) that spin dynamically as the tank travels (`query.modified_distance_moved`).
+  - 8 rotating road wheels (`wheel_r1`..`wheel_r4`, `wheel_l1`..`wheel_l4`) and sprocket wheels that spin dynamically as the tank travels (`query.modified_distance_moved`).
+  - Full 46-bone caterpillar tread and track chain conveyor animation moving in sync with road wheels.
 - **Aiming Turret**:
   - Turret and arched cannon smoothly track target yaw (`query.target_y_rotation`) to aim where you look.
 - **Driveable Heavy Armor**:
@@ -76,6 +77,19 @@ An authentic, fully-featured **Villager News Vehicle Addon** for Minecraft Bedro
   - Mount the commander's hatch on top of the turret at `[0, 4.8, 1.5]` to command and drive across the terrain.
 - **Hitbox**:
   - Custom hit test: `width: 5.0`, `height: 4.0`, `pivot: [0, 2.0, 0.2]`.
+
+---
+
+### 5. ✈️ Daladas Plane (`renderphoenix:plane`)
+- **Iconic 3D Model**: Massive 469-bone custom airliner constructed entirely out of villagers forming the fuselage, swept wings, and tail fin straight from the legendary *Daladas Airlines* episode!
+- **Exclusive Librarian Texture**:
+  - Styled with the custom `librarian.png` texture as requested for Daladas.
+- **Player Seat & Flight Controls**:
+  - Cockpit seat positioned precisely at `[0, 0.3, 5]`.
+  - Steer in 3D air space with WASD controls, holding jump to climb altitude.
+  - Smooth landing physics with gravity re-engaging upon player dismount.
+- **Hitbox**:
+  - Custom hit test: `width: 3.7`, `height: 2.0`, `pivot: [0, 1, 0]`.
 
 ---
 

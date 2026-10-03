@@ -1,0 +1,215 @@
+{
+  "format_version": "1.20.80",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "renderphoenix:plane",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false,
+      "animations": {
+        "flight_controller": "controller.animation.plane.flight"
+      },
+      "scripts": {
+        "animate": [
+          "flight_controller"
+        ]
+      }
+    },
+    "component_groups": {
+      "renderphoenix:grounded": {
+        "minecraft:physics": {
+          "has_gravity": true,
+          "has_collision": true
+        },
+        "minecraft:movement": {
+          "value": 0.0
+        }
+      },
+      "renderphoenix:plane_flight": {
+        "minecraft:type_family": {
+          "family": [
+            "villager_plane",
+            "daladas",
+            "plane",
+            "inanimate",
+            "vehicle",
+            "plane_flying",
+            "player_piloted"
+          ]
+        },
+        "minecraft:physics": {
+          "has_gravity": false,
+          "has_collision": true
+        },
+        "minecraft:can_fly": {},
+        "minecraft:movement.hover": {
+          "max_turn": 30.0
+        },
+        "minecraft:navigation.fly": {
+          "can_path_over_water": true
+        },
+        "minecraft:movement": {
+          "value": 0.85
+        },
+        "minecraft:input_air_controlled": {
+          "strafe_speed_modifier": 0.8,
+          "backwards_movement_modifier": 0.4
+        },
+        "minecraft:vertical_movement_action": {
+          "vertical_velocity": 0.65
+        }
+      }
+    },
+    "components": {
+      "minecraft:is_hidden_when_invisible": {},
+      "minecraft:type_family": {
+        "family": [
+          "villager_plane",
+          "daladas",
+          "plane",
+          "inanimate",
+          "vehicle"
+        ]
+      },
+      "minecraft:collision_box": {
+        "width": 3.7,
+        "height": 2.0
+      },
+      "minecraft:custom_hit_test": {
+        "hitboxes": [
+          {
+            "width": 3.7,
+            "height": 2,
+            "pivot": [
+              0,
+              1,
+              0
+            ]
+          }
+        ]
+      },
+      "minecraft:health": {
+        "value": 150,
+        "max": 150
+      },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "cause": "fall",
+            "deals_damage": false
+          },
+          {
+            "cause": "suffocation",
+            "deals_damage": false
+          }
+        ]
+      },
+      "minecraft:knockback_resistance": {
+        "value": 1.0
+      },
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:nameable": {
+        "allow_name_tag_renaming": true,
+        "always_show": false
+      },
+      "minecraft:rideable": {
+        "seat_count": 1,
+        "family_types": [
+          "player",
+          "villager"
+        ],
+        "interact_text": "action.interact.ride.plane",
+        "controlling_seat": 0,
+        "seats": [
+          {
+            "position": [
+              0,
+              0.3,
+              5
+            ],
+            "min_rider_count": 0,
+            "max_rider_count": 1
+          }
+        ]
+      },
+      "minecraft:interact": {
+        "interactions": [
+          {
+            "interact_text": "action.interact.board_villager",
+            "on_interact": {
+              "filters": {
+                "all_of": [
+                  {
+                    "test": "has_equipment",
+                    "subject": "other",
+                    "domain": "hand",
+                    "value": "emerald"
+                  },
+                  {
+                    "test": "has_rider",
+                    "subject": "self",
+                    "value": false
+                  }
+                ]
+              },
+              "event": "renderphoenix:board_nearby_villager"
+            }
+          }
+        ]
+      }
+    },
+    "events": {
+      "minecraft:entity_spawned": {
+        "add": {
+          "component_groups": [
+            "renderphoenix:grounded"
+          ]
+        }
+      },
+      "renderphoenix:player_mount": {
+        "remove": {
+          "component_groups": [
+            "renderphoenix:grounded"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "renderphoenix:plane_flight"
+          ]
+        }
+      },
+      "renderphoenix:on_dismount": {
+        "remove": {
+          "component_groups": [
+            "renderphoenix:plane_flight"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "renderphoenix:grounded"
+          ]
+        }
+      },
+      "renderphoenix:board_nearby_villager": {
+        "run_command": {
+          "command": [
+            "/ride @e[type=villager,r=6,c=1] start_riding @s"
+          ]
+        },
+        "remove": {
+          "component_groups": [
+            "renderphoenix:grounded"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "renderphoenix:plane_flight"
+          ]
+        }
+      }
+    }
+  }
+}

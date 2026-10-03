@@ -13,7 +13,12 @@ item.spawn_egg.entity.renderphoenix:firefighter.name=Spawn Villager News Firefig
 entity.renderphoenix:tank.name=Villager News Tank
 item.spawn_egg.entity.renderphoenix:tank.name=Spawn Villager News Tank
 
+entity.renderphoenix:plane.name=Daladas Plane
+item.spawn_egg.entity.renderphoenix:plane.name=Spawn Daladas Plane
+
 action.interact.ride.boat=Board Vehicle
 action.interact.ride.firefighter=Drive Firefighter
 action.interact.ride.tank=Drive Tank
+action.interact.ride.plane=Fly Daladas Plane
 action.interact.board_villager=Board Nearby Villager
+

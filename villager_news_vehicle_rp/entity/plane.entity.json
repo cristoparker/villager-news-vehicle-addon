@@ -1,0 +1,24 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "renderphoenix:plane",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/plane/librarian"
+      },
+      "geometry": {
+        "default": "geometry.renderphoenix.plane"
+      },
+      "render_controllers": [
+        "controller.render.plane"
+      ],
+      "spawn_egg": {
+        "base_color": "#c45d3e",
+        "overlay_color": "#dfa07a"
+      }
+    }
+  }
+}

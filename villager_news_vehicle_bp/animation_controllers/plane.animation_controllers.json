@@ -1,0 +1,30 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.plane.flight": {
+      "initial_state": "grounded",
+      "states": {
+        "grounded": {
+          "on_entry": [
+            "@s renderphoenix:on_dismount"
+          ],
+          "transitions": [
+            {
+              "flying": "query.has_rider"
+            }
+          ]
+        },
+        "flying": {
+          "on_entry": [
+            "@s renderphoenix:player_mount"
+          ],
+          "transitions": [
+            {
+              "grounded": "!query.has_rider"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
