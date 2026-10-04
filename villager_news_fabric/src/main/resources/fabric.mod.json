@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "villagernews",
+	"version": "${version}",
+	"name": "Villager News Vehicles",
+	"description": "Villager News Vehicles: Daladas Plane, Helicopter, Tank, Boat, Firefighter, and Missiles with advanced aerodynamics and flight physics!",
+	"authors": [
+		"Renderphoenix",
+		"Antigravity"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/villagernews/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.villagernews.VillagerNewsMod"
+		],
+		"client": [
+			"com.villagernews.client.VillagerNewsModClient"
+		]
+	},
+	"mixins": [
+		"villagernews.mixins.json",
+		{
+			"config": "villagernews.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

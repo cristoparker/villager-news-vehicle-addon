@@ -19,3 +19,22 @@ scratch/
 # Reference addons
 Vanilla Vehicles (addon)/
 Vanilla Vehicles (addon)
+
+# Java / Gradle / Fabric
+.gradle/
+**/build/
+**/out/
+**/classes/
+**/run/
+.settings/
+bin/
+.classpath
+.project
+*.launch
+*.iml
+*.ipr
+*.iws
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr
