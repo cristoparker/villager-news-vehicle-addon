@@ -43,25 +43,17 @@
     },
 
     "component_groups": {
-      "cg:flying": {
+      "cg:flight_mode": {
         "minecraft:physics": {
           "has_gravity": false,
           "has_collision": true
-        },
-        "minecraft:can_fly": {},
-        "minecraft:movement": { "value": 1.0 },
-        "minecraft:movement.hover": { "max_turn": 30.0 },
-        "minecraft:navigation.fly": { "can_path_over_water": true }
+        }
       },
-      "cg:grounded": {
+      "cg:ground_mode": {
         "minecraft:physics": {
           "has_gravity": true,
           "has_collision": true
-        },
-        "minecraft:movement": { "value": 0.5 },
-        "minecraft:movement.basic": { "max_turn": 30.0 },
-        "minecraft:navigation.walk": { "can_path_over_water": true },
-        "minecraft:input_ground_controlled": {}
+        }
       }
     },
 
@@ -79,11 +71,26 @@
           { "width": 3.7, "height": 2.0, "pivot": [ 0, 1, 0 ] }
         ]
       },
-      "minecraft:health": { "value": 150, "max": 150 },
+      "minecraft:health": {
+        "value": 150,
+        "max": 150
+      },
       "minecraft:physics": {
         "has_gravity": true,
         "has_collision": true
       },
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:push_through": {
+        "value": 0.9
+      },
+      "minecraft:horse.jump_strength": {
+        "value": 0.0
+      },
+      "minecraft:can_power_jump": {},
+      "minecraft:jump.static": {},
       "minecraft:buoyant": {
         "base_buoyancy": 0.5,
         "apply_gravity": false,
@@ -116,10 +123,6 @@
           { "cause": "suffocation", "deals_damage": false }
         ]
       },
-      "minecraft:pushable": {
-        "is_pushable": true,
-        "is_pushable_by_piston": true
-      },
       "minecraft:nameable": {
         "allow_name_tag_renaming": true,
         "always_show": false
@@ -136,7 +139,9 @@
           {
             "position": [ 0, 0.3, 5 ],
             "min_rider_count": 0,
-            "max_rider_count": 1
+            "max_rider_count": 1,
+            "third_person_camera_radius": 8.0,
+            "camera_relax_distance_smoothing": 1.0
           }
         ]
       },
@@ -160,21 +165,22 @@
 
     "events": {
       "minecraft:entity_spawned": {
-        "add": { "component_groups": [ "cg:grounded" ] },
+        "add": { "component_groups": [ "cg:ground_mode" ] },
         "set_property": {
           "renderphoenix:plane_state": "stationary",
-          "renderphoenix:trick": "ready"
+          "renderphoenix:trick": "ready",
+          "renderphoenix:wasd": "none"
         }
       },
 
       "renderphoenix:enter_flight_mode": {
-        "add": { "component_groups": [ "cg:flying" ] },
-        "remove": { "component_groups": [ "cg:grounded" ] }
+        "add": { "component_groups": [ "cg:flight_mode" ] },
+        "remove": { "component_groups": [ "cg:ground_mode" ] }
       },
 
       "renderphoenix:enter_ground_mode": {
-        "add": { "component_groups": [ "cg:grounded" ] },
-        "remove": { "component_groups": [ "cg:flying" ] }
+        "add": { "component_groups": [ "cg:ground_mode" ] },
+        "remove": { "component_groups": [ "cg:flight_mode" ] }
       },
 
       "renderphoenix:trigger_trick": {

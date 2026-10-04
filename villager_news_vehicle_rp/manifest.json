@@ -2,9 +2,10 @@
   "format_version": 2,
   "header": {
     "name": "Villager News Vehicle Addon RP",
-    "description": "Villager News Vehicle Addon Resource Pack with custom 3D models, textures, and animations for Villager Vehicles.",
+    "description": "Created by Renderphoenix Creatives. Fan made. Not affiliated with Oreville or Elements Animation. Copyright all rights reserved. Third party distributions are banned.",
     "uuid": "7ac73f6a-9584-4d4f-b201-7be43f4d7e7e",
-    "version": [1, 2, 0],
+    "pack_scope": "world",
+    "version": [1, 0, 0],
     "min_engine_version": [1, 21, 0]
   },
   "modules": [
@@ -12,13 +13,20 @@
       "description": "Villager News Vehicle Addon Resources",
       "type": "resources",
       "uuid": "b7c98d4d-e68c-4925-9886-f11951249bcd",
-      "version": [1, 2, 0]
+      "version": [1, 0, 0]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "eef8942e-33f1-461a-afb5-c89c90d34400",
+      "version": [1, 0, 0]
     }
   ],
   "metadata": {
     "product_type": "addon",
     "authors": [
-      "Element Animation & RenderPhoenix"
-    ]
+      "Renderphoenix Creatives"
+    ],
+    "license": "Copyright all rights reserved. Third party distributions are banned."
   }
 }

@@ -2,9 +2,9 @@
   "format_version": 2,
   "header": {
     "name": "Villager News Vehicle Addon BP",
-    "description": "Villager News Vehicle Addon Behavior Pack - Features the iconic Villager Helicopter, Boat, Tank, Firefighter Car, and Daladas Plane!",
+    "description": "Created by Renderphoenix Creatives. Fan made. Not affiliated with Oreville or Elements Animation. Copyright all rights reserved. Third party distributions are banned.",
     "uuid": "eef8942e-33f1-461a-afb5-c89c90d34400",
-    "version": [1, 2, 0],
+    "version": [1, 0, 0],
     "min_engine_version": [1, 21, 0]
   },
   "modules": [
@@ -12,21 +12,21 @@
       "description": "Villager News Vehicle Addon Behaviors",
       "type": "data",
       "uuid": "95f1495a-c0d9-494e-b9a9-e6ee83d5893c",
-      "version": [1, 2, 0]
+      "version": [1, 0, 0]
     },
     {
       "description": "Villager News Vehicle Addon Scripting",
       "type": "script",
       "language": "javascript",
       "uuid": "725ad994-433a-42dd-a93d-ae2d7267e699",
-      "version": [1, 2, 0],
+      "version": [1, 0, 0],
       "entry": "scripts/main.js"
     }
   ],
   "dependencies": [
     {
       "uuid": "7ac73f6a-9584-4d4f-b201-7be43f4d7e7e",
-      "version": [1, 2, 0]
+      "version": [1, 0, 0]
     },
     {
       "module_name": "@minecraft/server",
@@ -36,7 +36,8 @@
   "metadata": {
     "product_type": "addon",
     "authors": [
-      "Element Animation & RenderPhoenix"
-    ]
+      "Renderphoenix Creatives"
+    ],
+    "license": "Copyright all rights reserved. Third party distributions are banned."
   }
 }
