@@ -2,8 +2,7 @@ package com.villagernews.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.villagernews.client.render.geo.BedrockEntityModel;
-import com.villagernews.client.render.geo.BedrockModelLoader;
+import com.villagernews.client.model.DaladasPlaneJavaModel;
 import com.villagernews.entity.DaladasPlaneEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -21,12 +20,12 @@ public class DaladasPlaneRenderer extends EntityRenderer<DaladasPlaneEntity, Dal
         public float roll;
     }
 
-    private final BedrockEntityModel<PlaneRenderState> model;
+    private final DaladasPlaneJavaModel<PlaneRenderState> model;
     private final Identifier texture = Identifier.fromNamespaceAndPath("villagernews", "textures/entity/plane/librarian.png");
 
     public DaladasPlaneRenderer(EntityRendererProvider.Context context) {
         super(context);
-        this.model = new BedrockEntityModel<>(BedrockModelLoader.load("/assets/villagernews/geo/daladas_plane.geo.json"));
+        this.model = new DaladasPlaneJavaModel<>(DaladasPlaneJavaModel.createBodyLayer().bakeRoot());
         this.shadowRadius = 2.5f;
     }
 
@@ -49,7 +48,8 @@ public class DaladasPlaneRenderer extends EntityRenderer<DaladasPlaneEntity, Dal
         poseStack.rotateDegrees(Axis.YP, 180.0f - state.yRot);
         poseStack.rotateDegrees(Axis.XP, state.xRot);
         poseStack.rotateDegrees(Axis.ZP, state.roll);
-        poseStack.scale(-1.0f, 1.0f, -1.0f);
+        poseStack.scale(-1.0f, -1.0f, 1.0f);
+        poseStack.translate(0.0, -1.5, 0.0);
 
         collector.submitModel(this.model, state, poseStack, this.texture, state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor);
 

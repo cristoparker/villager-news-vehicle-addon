@@ -2,8 +2,7 @@ package com.villagernews.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.villagernews.client.render.geo.BedrockEntityModel;
-import com.villagernews.client.render.geo.BedrockModelLoader;
+import com.villagernews.client.model.VillagerTankJavaModel;
 import com.villagernews.entity.VillagerTankEntity;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -23,12 +22,12 @@ public class VillagerTankRenderer extends EntityRenderer<VillagerTankEntity, Vil
         public float turretPitch;
     }
 
-    private final BedrockEntityModel<TankRenderState> model;
+    private final VillagerTankJavaModel<TankRenderState> model;
     private final Identifier texture = Identifier.fromNamespaceAndPath("villagernews", "textures/entity/villager_helicopter/farmer.png");
 
     public VillagerTankRenderer(EntityRendererProvider.Context context) {
         super(context);
-        this.model = new BedrockEntityModel<>(BedrockModelLoader.load("/assets/villagernews/geo/villager_tank.geo.json"));
+        this.model = new VillagerTankJavaModel<>(VillagerTankJavaModel.createBodyLayer().bakeRoot());
         this.shadowRadius = 1.8f;
     }
 
@@ -55,7 +54,8 @@ public class VillagerTankRenderer extends EntityRenderer<VillagerTankEntity, Vil
 
         poseStack.pushPose();
         poseStack.rotateDegrees(Axis.YP, 180.0f - state.yRot);
-        poseStack.scale(-1.0f, 1.0f, -1.0f);
+        poseStack.scale(-1.0f, -1.0f, 1.0f);
+        poseStack.translate(0.0, -1.5, 0.0);
 
         collector.submitModel(this.model, state, poseStack, this.texture, state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor);
 

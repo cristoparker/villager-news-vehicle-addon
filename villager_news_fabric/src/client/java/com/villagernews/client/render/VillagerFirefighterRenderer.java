@@ -2,8 +2,7 @@ package com.villagernews.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.villagernews.client.render.geo.BedrockEntityModel;
-import com.villagernews.client.render.geo.BedrockModelLoader;
+import com.villagernews.client.model.VillagerFirefighterJavaModel;
 import com.villagernews.entity.VillagerFirefighterEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -19,12 +18,12 @@ public class VillagerFirefighterRenderer extends EntityRenderer<VillagerFirefigh
         public float yRot;
     }
 
-    private final BedrockEntityModel<FirefighterRenderState> model;
+    private final VillagerFirefighterJavaModel<FirefighterRenderState> model;
     private final Identifier texture = Identifier.fromNamespaceAndPath("villagernews", "textures/entity/villager_helicopter/farmer.png");
 
     public VillagerFirefighterRenderer(EntityRendererProvider.Context context) {
         super(context);
-        this.model = new BedrockEntityModel<>(BedrockModelLoader.load("/assets/villagernews/geo/villager_firefighters.geo.json"));
+        this.model = new VillagerFirefighterJavaModel<>(VillagerFirefighterJavaModel.createBodyLayer().bakeRoot());
         this.shadowRadius = 1.6f;
     }
 
@@ -43,7 +42,8 @@ public class VillagerFirefighterRenderer extends EntityRenderer<VillagerFirefigh
     public void submit(FirefighterRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState cameraRenderState) {
         poseStack.pushPose();
         poseStack.rotateDegrees(Axis.YP, 180.0f - state.yRot);
-        poseStack.scale(-1.0f, 1.0f, -1.0f);
+        poseStack.scale(-1.0f, -1.0f, 1.0f);
+        poseStack.translate(0.0, -1.5, 0.0);
 
         collector.submitModel(this.model, state, poseStack, this.texture, state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor);
 
