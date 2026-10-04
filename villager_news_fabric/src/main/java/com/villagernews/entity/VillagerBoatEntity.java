@@ -60,24 +60,27 @@ public class VillagerBoatEntity extends VehicleBaseEntity {
         if (!level.isClientSide()) {
             double targetVy = calculateWaterYAdjustment();
 
-            if (driver instanceof ServerPlayer player) {
-                Input input = player.getLastClientInput();
+            if (driver != null) {
+                boolean left = isInputLeft(driver);
+                boolean right = isInputRight(driver);
+                boolean forward = isInputForward(driver);
+                boolean backward = isInputBackward(driver);
 
-                if (input.left()) {
-                    this.setYRot(this.getYRot() - 3.0f);
-                } else if (input.right()) {
-                    this.setYRot(this.getYRot() + 3.0f);
+                if (left) {
+                    this.setYRot(this.getYRot() - 3.2f);
+                } else if (right) {
+                    this.setYRot(this.getYRot() + 3.2f);
                 }
 
                 float targetSpeed = 0.0f;
                 boolean inWater = this.isInWater();
-                if (input.forward()) {
-                    targetSpeed = inWater ? 0.38f : 0.12f;
-                } else if (input.backward()) {
-                    targetSpeed = inWater ? -0.18f : -0.06f;
+                if (forward) {
+                    targetSpeed = inWater ? 0.42f : 0.15f;
+                } else if (backward) {
+                    targetSpeed = inWater ? -0.22f : -0.08f;
                 }
 
-                this.rowingSpeed = Mth.lerp(0.15f, this.rowingSpeed, targetSpeed);
+                this.rowingSpeed = Mth.lerp(0.18f, this.rowingSpeed, targetSpeed);
 
                 float radYaw = -this.getYRot() * Mth.DEG_TO_RAD;
                 double vx = Mth.sin(radYaw) * this.rowingSpeed;

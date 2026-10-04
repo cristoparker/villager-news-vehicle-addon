@@ -117,10 +117,11 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
         }
 
         if (!level.isClientSide()) {
-            if (driver instanceof ServerPlayer player) {
-                Input input = player.getLastClientInput();
-                handleFlightPhysics(player, input);
-                updateTelemetryHud(player);
+            if (driver != null) {
+                handleFlightPhysics(driver);
+                if (driver instanceof ServerPlayer player) {
+                    updateTelemetryHud(player);
+                }
             } else {
                 handleUnattended();
             }
@@ -131,11 +132,14 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
         this.entityData.set(DATA_ROLL, this.currentRollAngle);
     }
 
-    private void handleFlightPhysics(ServerPlayer player, Input input) {
+    private void handleFlightPhysics(LivingEntity driver) {
         int state = getPlaneState();
-        Vec3 view = player.getViewVector(1.0f);
-        float playerYaw = player.getYRot();
-        float playerPitch = player.getXRot();
+        boolean forward = isInputForward(driver);
+        boolean backward = isInputBackward(driver);
+        boolean jump = isInputJump(driver);
+        boolean sprint = isInputSprint(driver);
+        float playerYaw = getDriverYaw(driver);
+        float playerPitch = getDriverPitch(driver);
 
         if (this.flightImmunityTicks > 0) {
             this.flightImmunityTicks--;
@@ -145,7 +149,7 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
             case STATE_STATIONARY -> {
                 this.targetRollAngle = 0.0f;
                 this.setXRot(0.0f);
-                if (input.forward() || input.jump()) {
+                if (forward || jump) {
                     enterTakeoff();
                 } else {
                     // Braking to halt
@@ -157,12 +161,12 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
             case STATE_TAKEOFF -> {
                 this.targetRollAngle = 0.0f;
                 this.setXRot(0.0f);
-                if (input.forward() || input.jump()) {
-                    this.currentGroundSpeed = Math.min(this.currentGroundSpeed + GROUND_ACCEL, MAX_GROUND_SPEED);
+                if (forward || jump) {
+                    this.currentGroundSpeed = Math.min(this.currentGroundSpeed + 0.035f, MAX_GROUND_SPEED);
 
                     // Yaw steering during ground taxi
                     float yawDiff = Mth.wrapDegrees(playerYaw - this.getYRot());
-                    this.setYRot(this.getYRot() + yawDiff * 0.15f);
+                    this.setYRot(this.getYRot() + yawDiff * 0.18f);
 
                     float radYaw = -this.getYRot() * Mth.DEG_TO_RAD;
                     Vec3 groundMotion = new Vec3(Mth.sin(radYaw) * this.currentGroundSpeed, -0.04, Mth.cos(radYaw) * this.currentGroundSpeed);
@@ -171,34 +175,37 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
                     this.applyRammingCollision(this.currentGroundSpeed, 10.0f, 1.0);
 
                     this.takeoffTicks--;
-                    boolean pullingUp = playerPitch < -6.0f || input.jump();
-                    boolean canRotate = this.currentGroundSpeed >= ROTATION_SPEED_MIN && pullingUp;
+                    boolean pullingUp = playerPitch < -4.0f || jump;
+                    boolean canRotate = this.currentGroundSpeed >= 0.22f && pullingUp;
 
                     if (this.takeoffTicks <= 0 || canRotate) {
                         enterFlight();
                     }
                 } else {
-                    setPlaneState(STATE_STATIONARY);
-                    this.currentGroundSpeed = 0.0f;
+                    this.currentGroundSpeed = Math.max(0.0f, this.currentGroundSpeed - 0.03f);
+                    if (this.currentGroundSpeed <= 0.01f) {
+                        setPlaneState(STATE_STATIONARY);
+                        this.currentGroundSpeed = 0.0f;
+                    }
                 }
             }
             case STATE_FLYING -> {
                 // Airspeed target
                 float targetSpeed = CRUISE_SPEED;
-                if (input.jump() || input.sprint()) {
+                if (jump || sprint) {
                     targetSpeed = BOOST_SPEED; // 194 km/h boost
-                } else if (input.backward()) {
+                } else if (backward) {
                     targetSpeed = BRAKE_SPEED; // 79 km/h airbrake
                 }
 
                 // Smooth aerodynamic turning following pilot look
                 float yawDiff = Mth.wrapDegrees(playerYaw - this.getYRot());
-                float newYaw = this.getYRot() + yawDiff * 0.12f;
+                float newYaw = this.getYRot() + yawDiff * 0.14f;
                 this.setYRot(newYaw);
 
                 // Smooth pitch following pilot look
                 float targetPitch = playerPitch * 0.90f;
-                float newPitch = Mth.lerp(0.15f, this.getXRot(), targetPitch);
+                float newPitch = Mth.lerp(0.18f, this.getXRot(), targetPitch);
                 this.setXRot(newPitch);
 
                 // Aerodynamic Bank Angle (roll follows yaw turn rate)
@@ -213,7 +220,10 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
                 // 3D Aerodynamic Velocity Vector
                 float pitchFactor = Math.abs(Mth.sin(this.getXRot() * Mth.DEG_TO_RAD)) * 0.80f;
                 float forwardThrust = targetSpeed * (1.0f - pitchFactor * 0.35f);
-                float verticalSpeed = -Mth.sin(this.getXRot() * Mth.DEG_TO_RAD) * targetSpeed * 0.60f;
+                float verticalSpeed = -Mth.sin(this.getXRot() * Mth.DEG_TO_RAD) * targetSpeed * 0.70f;
+                if (jump) {
+                    verticalSpeed += 0.22f; // Extra lift boost on Space
+                }
 
                 float radY = -this.getYRot() * Mth.DEG_TO_RAD;
                 double vx = Mth.sin(radY) * forwardThrust;
@@ -239,15 +249,16 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
 
                 // High-speed wall/mountain and rough touchdown crash detection
                 if (this.flightImmunityTicks <= 0) {
-                    if (this.horizontalCollision) {
+                    if (this.horizontalCollision && Math.abs(forwardThrust) > 1.2) {
                         enterCrash();
                         return;
                     }
                     if (this.onGround() || this.isInWater() || this.verticalCollision) {
-                        if (playerPitch > 20.0f && this.getDeltaMovement().length() > 0.6) {
+                        if (playerPitch > 25.0f && this.getDeltaMovement().length() > 0.8) {
                             enterCrash();
                             return;
-                        } else if (playerPitch <= 12.0f) {
+                        } else if (backward || !forward) {
+                            // Touchdown landing when braking or throttle cut
                             setPlaneState(STATE_STATIONARY);
                             this.currentGroundSpeed = 0.0f;
                             return;
@@ -286,17 +297,17 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
 
     private void enterTakeoff() {
         setPlaneState(STATE_TAKEOFF);
-        this.currentGroundSpeed = 0.08f;
-        this.takeoffTicks = 40;
+        this.currentGroundSpeed = 0.12f;
+        this.takeoffTicks = 20; // 1 second takeoff roll
     }
 
     private void enterFlight() {
         setPlaneState(STATE_FLYING);
-        this.flightImmunityTicks = 25;
+        this.flightImmunityTicks = 30;
 
         // Clean liftoff pop impulse to clear runway
         float radYaw = -this.getYRot() * Mth.DEG_TO_RAD;
-        Vec3 liftoffMotion = new Vec3(Mth.sin(radYaw) * 0.6, 0.38, Mth.cos(radYaw) * 0.6);
+        Vec3 liftoffMotion = new Vec3(Mth.sin(radYaw) * 1.0, 0.52, Mth.cos(radYaw) * 1.0);
         this.setDeltaMovement(liftoffMotion);
         this.move(MoverType.SELF, liftoffMotion);
 

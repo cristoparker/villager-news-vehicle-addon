@@ -51,6 +51,22 @@ public class VillagerNewsModClient implements ClientModInitializer {
             Entity vehicle = client.player.getVehicle();
             if (vehicle == null) return;
 
+            if (vehicle instanceof com.villagernews.entity.VehicleBaseEntity) {
+                boolean forward = client.options.keyUp.isDown();
+                boolean backward = client.options.keyDown.isDown();
+                boolean left = client.options.keyLeft.isDown();
+                boolean right = client.options.keyRight.isDown();
+                boolean jump = client.options.keyJump.isDown();
+                boolean shift = client.options.keyShift.isDown();
+                boolean sprint = client.options.keySprint.isDown();
+                float yaw = client.player.getYRot();
+                float pitch = client.player.getXRot();
+
+                ClientPlayNetworking.send(new com.villagernews.network.VehicleInputPayload(
+                        forward, backward, left, right, jump, shift, sprint, yaw, pitch
+                ));
+            }
+
             while (keySpecialAction.consumeClick()) {
                 if (vehicle instanceof DaladasPlaneEntity) {
                     ClientPlayNetworking.send(new VehicleActionPayload(VehicleActionPayload.ACTION_BARREL_ROLL, 1));

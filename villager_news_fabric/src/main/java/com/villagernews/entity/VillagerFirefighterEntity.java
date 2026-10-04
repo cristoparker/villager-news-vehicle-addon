@@ -4,6 +4,9 @@ import com.villagernews.init.ModEntities;
 import com.villagernews.init.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -25,6 +28,10 @@ import java.util.List;
 
 public class VillagerFirefighterEntity extends VehicleBaseEntity {
 
+    // Synced so the client renderer can animate the wheels
+    private static final EntityDataAccessor<Float> DATA_DRIVE_SPEED =
+            SynchedEntityData.defineId(VillagerFirefighterEntity.class, EntityDataSerializers.FLOAT);
+
     private float driveSpeed = 0.0f;
     private int sprayCooldown = 0;
 
@@ -35,6 +42,17 @@ public class VillagerFirefighterEntity extends VehicleBaseEntity {
     public VillagerFirefighterEntity(Level level, double x, double y, double z) {
         super(ModEntities.FIREFIGHTER, level);
         this.setPos(x, y, z);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_DRIVE_SPEED, 0.0f);
+    }
+
+    /** Client-readable drive speed for wheel animation. */
+    public float getDriveSpeed() {
+        return this.entityData.get(DATA_DRIVE_SPEED);
     }
 
     @Override
@@ -57,37 +75,51 @@ public class VillagerFirefighterEntity extends VehicleBaseEntity {
         Level level = this.level();
 
         if (!level.isClientSide()) {
-            if (driver instanceof ServerPlayer player) {
-                Input input = player.getLastClientInput();
-                handleDriving(player, input);
+            if (driver != null) {
+                handleDriving(driver);
             } else {
+                this.driveSpeed = Mth.lerp(0.2f, this.driveSpeed, 0.0f);
                 this.setDeltaMovement(this.getDeltaMovement().multiply(0.8, 0.0, 0.8));
                 this.move(MoverType.SELF, this.getDeltaMovement());
             }
+            // Keep client in sync for wheel animation
+            this.entityData.set(DATA_DRIVE_SPEED, this.driveSpeed);
         }
     }
 
-    private void handleDriving(ServerPlayer player, Input input) {
-        if (input.left()) {
-            this.setYRot(this.getYRot() - 3.2f);
-        } else if (input.right()) {
-            this.setYRot(this.getYRot() + 3.2f);
+    private void handleDriving(LivingEntity driver) {
+        boolean left = isInputLeft(driver);
+        boolean right = isInputRight(driver);
+        boolean forward = isInputForward(driver);
+        boolean backward = isInputBackward(driver);
+
+        if (left) {
+            this.setYRot(this.getYRot() - 3.5f);
+        } else if (right) {
+            this.setYRot(this.getYRot() + 3.5f);
+        } else {
+            // Also steer towards player look direction if turning head significantly
+            float playerYaw = getDriverYaw(driver);
+            float diff = Mth.wrapDegrees(playerYaw - this.getYRot());
+            if (Math.abs(diff) > 35.0f && Math.abs(this.driveSpeed) > 0.05f) {
+                this.setYRot(this.getYRot() + Math.signum(diff) * 2.2f);
+            }
         }
 
         float targetSpeed = 0.0f;
-        if (input.forward()) {
-            targetSpeed = 0.45f; // Fast emergency truck speed
-        } else if (input.backward()) {
-            targetSpeed = -0.22f;
+        if (forward) {
+            targetSpeed = 0.52f; // Fast emergency truck speed
+        } else if (backward) {
+            targetSpeed = -0.25f;
         }
 
-        this.driveSpeed = Mth.lerp(0.2f, this.driveSpeed, targetSpeed);
+        this.driveSpeed = Mth.lerp(0.25f, this.driveSpeed, targetSpeed);
 
         float radYaw = -this.getYRot() * Mth.DEG_TO_RAD;
         double vx = Mth.sin(radYaw) * this.driveSpeed;
         double vz = Mth.cos(radYaw) * this.driveSpeed;
 
-        Vec3 motion = new Vec3(vx, this.onGround() ? 0.0 : -0.08, vz);
+        Vec3 motion = new Vec3(vx, this.onGround() ? 0.0 : -0.15, vz);
         this.setDeltaMovement(motion);
         this.move(MoverType.SELF, motion);
 

@@ -91,6 +91,141 @@ public abstract class VehicleBaseEntity extends VehicleEntity {
         return true;
     }
 
+    protected boolean inputForward;
+    protected boolean inputBackward;
+    protected boolean inputLeft;
+    protected boolean inputRight;
+    protected boolean inputJump;
+    protected boolean inputShift;
+    protected boolean inputSprint;
+    protected float inputPlayerYaw;
+    protected float inputPlayerPitch;
+
+    public void updateInputs(com.villagernews.network.VehicleInputPayload payload) {
+        this.inputForward = payload.forward();
+        this.inputBackward = payload.backward();
+        this.inputLeft = payload.left();
+        this.inputRight = payload.right();
+        this.inputJump = payload.jump();
+        this.inputShift = payload.shift();
+        this.inputSprint = payload.sprint();
+        this.inputPlayerYaw = payload.playerYaw();
+        this.inputPlayerPitch = payload.playerPitch();
+    }
+
+    public boolean isInputForward(LivingEntity driver) {
+        if (this.inputForward) return true;
+        if (driver instanceof net.minecraft.server.level.ServerPlayer sp) {
+            return sp.getLastClientInput().forward();
+        }
+        return false;
+    }
+
+    public boolean isInputBackward(LivingEntity driver) {
+        if (this.inputBackward) return true;
+        if (driver instanceof net.minecraft.server.level.ServerPlayer sp) {
+            return sp.getLastClientInput().backward();
+        }
+        return false;
+    }
+
+    public boolean isInputLeft(LivingEntity driver) {
+        if (this.inputLeft) return true;
+        if (driver instanceof net.minecraft.server.level.ServerPlayer sp) {
+            return sp.getLastClientInput().left();
+        }
+        return false;
+    }
+
+    public boolean isInputRight(LivingEntity driver) {
+        if (this.inputRight) return true;
+        if (driver instanceof net.minecraft.server.level.ServerPlayer sp) {
+            return sp.getLastClientInput().right();
+        }
+        return false;
+    }
+
+    public boolean isInputJump(LivingEntity driver) {
+        if (this.inputJump) return true;
+        if (driver instanceof net.minecraft.server.level.ServerPlayer sp) {
+            return sp.getLastClientInput().jump();
+        }
+        return false;
+    }
+
+    public boolean isInputShift(LivingEntity driver) {
+        if (this.inputShift) return true;
+        if (driver instanceof net.minecraft.server.level.ServerPlayer sp) {
+            return sp.getLastClientInput().shift();
+        }
+        return false;
+    }
+
+    public boolean isInputSprint(LivingEntity driver) {
+        if (this.inputSprint) return true;
+        if (driver instanceof net.minecraft.server.level.ServerPlayer sp) {
+            return sp.getLastClientInput().sprint();
+        }
+        return false;
+    }
+
+    public float getDriverYaw(LivingEntity driver) {
+        if (driver != null) {
+            return driver.getYRot();
+        }
+        return this.inputPlayerYaw;
+    }
+
+    public float getDriverPitch(LivingEntity driver) {
+        if (driver != null) {
+            return driver.getXRot();
+        }
+        return this.inputPlayerPitch;
+    }
+
+    @Override
+    protected void removePassenger(Entity passenger) {
+        super.removePassenger(passenger);
+        if (this.getPassengers().isEmpty()) {
+            this.inputForward = false;
+            this.inputBackward = false;
+            this.inputLeft = false;
+            this.inputRight = false;
+            this.inputJump = false;
+            this.inputShift = false;
+            this.inputSprint = false;
+        }
+    }
+
+    /**
+     * Server authoritative movement simulation:
+     * Overriding these prevents the client from discarding server position updates
+     * and stops the client from overriding vehicle positions with static client coordinates.
+     */
+    @Override
+    public boolean isClientAuthoritative() {
+        return false;
+    }
+
+    @Override
+    protected boolean isLocalClientAuthoritative() {
+        return false;
+    }
+
+    @Override
+    public float maxUpStep() {
+        return 1.0f;
+    }
+
+    /**
+     * Suppress the Entity base-class gravity so each vehicle subclass can
+     * manage its own vertical physics (avoids double-applying gravity).
+     */
+    @Override
+    public boolean isNoGravity() {
+        return true;
+    }
+
     /**
      * Detects entities in front of the vehicle and applies kinetic impact, damage, and knockback
      */

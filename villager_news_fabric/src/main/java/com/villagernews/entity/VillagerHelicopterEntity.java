@@ -93,18 +93,18 @@ public class VillagerHelicopterEntity extends VehicleBaseEntity {
 
         if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
             detectRotorCollisions(serverLevel);
-            if (driver instanceof ServerPlayer player) {
-                Input input = player.getLastClientInput();
-                handleFlight(player, input);
+            if (driver != null) {
+                handleFlight(driver);
             } else {
                 handleUnattended();
             }
         }
     }
 
-    private void handleFlight(ServerPlayer player, Input input) {
+    private void handleFlight(LivingEntity driver) {
         boolean onGround = this.onGround() || this.isInWater();
-        float playerYaw = player.getYRot();
+        float playerYaw = getDriverYaw(driver);
+        float playerPitch = getDriverPitch(driver);
         float yawDiff = Mth.wrapDegrees(playerYaw - this.getYRot());
         this.setYRot(this.getYRot() + yawDiff * 0.18f);
 
@@ -114,16 +114,20 @@ public class VillagerHelicopterEntity extends VehicleBaseEntity {
         float rx = Mth.cos(radYaw);
         float rz = -Mth.sin(radYaw);
 
-        boolean wantsAscend = input.jump();
-        boolean wantsDescend = input.shift() || player.getXRot() > 35.0f;
-        boolean wantsTakeoff = wantsAscend || input.forward();
+        boolean wantsAscend = isInputJump(driver);
+        boolean wantsDescend = isInputShift(driver) || playerPitch > 35.0f;
+        boolean forward = isInputForward(driver);
+        boolean backward = isInputBackward(driver);
+        boolean left = isInputLeft(driver);
+        boolean right = isInputRight(driver);
+        boolean wantsTakeoff = wantsAscend || forward;
 
         if (!isFlying()) {
             this.targetPitchTilt = 0.0f;
             this.targetRollTilt = 0.0f;
             if (wantsTakeoff) {
                 this.entityData.set(DATA_FLYING, true);
-                this.currentVy = 0.32f;
+                this.currentVy = 0.38f;
             } else {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(0.8, 0.0, 0.8));
                 this.move(MoverType.SELF, this.getDeltaMovement());
@@ -134,9 +138,9 @@ public class VillagerHelicopterEntity extends VehicleBaseEntity {
 
         // 1. Vertical Collective (Ascend / Descend / Hover)
         if (wantsAscend) {
-            this.currentVy = Math.min(this.currentVy + 0.06f, MAX_ASCEND_SPEED);
+            this.currentVy = Math.min(this.currentVy + 0.08f, MAX_ASCEND_SPEED);
         } else if (wantsDescend) {
-            this.currentVy = Math.max(this.currentVy - 0.06f, MAX_DESCEND_SPEED);
+            this.currentVy = Math.max(this.currentVy - 0.08f, MAX_DESCEND_SPEED);
         } else {
             this.currentVy *= 0.88f;
             if (Math.abs(this.currentVy) < 0.02f) {
@@ -146,8 +150,8 @@ public class VillagerHelicopterEntity extends VehicleBaseEntity {
         }
 
         // 2. Cyclic Horizontal Flight (WASD)
-        float forwardInput = (input.forward() ? 1.0f : 0.0f) - (input.backward() ? 1.0f : 0.0f);
-        float strafeInput = (input.right() ? 1.0f : 0.0f) - (input.left() ? 1.0f : 0.0f);
+        float forwardInput = (forward ? 1.0f : 0.0f) - (backward ? 1.0f : 0.0f);
+        float strafeInput = (right ? 1.0f : 0.0f) - (left ? 1.0f : 0.0f);
 
         double targetVx = (fx * forwardInput * MAX_HORIZONTAL_SPEED) + (rx * strafeInput * MAX_STRAFE_SPEED);
         double targetVz = (fz * forwardInput * MAX_HORIZONTAL_SPEED) + (rz * strafeInput * MAX_STRAFE_SPEED);
@@ -201,7 +205,7 @@ public class VillagerHelicopterEntity extends VehicleBaseEntity {
         }
 
         // 5. Landing detection
-        if (onGround && this.currentVy <= 0.05f && !wantsAscend && forwardInput == 0 && strafeInput == 0) {
+        if (onGround && this.currentVy <= 0.05f && !wantsAscend && !wantsTakeoff && forwardInput == 0 && strafeInput == 0) {
             this.entityData.set(DATA_FLYING, false);
             this.currentVx = 0.0f;
             this.currentVz = 0.0f;

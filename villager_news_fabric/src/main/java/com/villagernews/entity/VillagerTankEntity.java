@@ -80,13 +80,12 @@ public class VillagerTankEntity extends VehicleBaseEntity {
         Level level = this.level();
 
         if (!level.isClientSide()) {
-            if (driver instanceof ServerPlayer player) {
-                Input input = player.getLastClientInput();
-                handleDriving(player, input);
+            if (driver != null) {
+                handleDriving(driver);
 
                 // Turret aims where player looks
-                this.entityData.set(DATA_TURRET_YAW, player.getYRot());
-                this.entityData.set(DATA_TURRET_PITCH, player.getXRot());
+                this.entityData.set(DATA_TURRET_YAW, getDriverYaw(driver));
+                this.entityData.set(DATA_TURRET_PITCH, getDriverPitch(driver));
             } else {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(0.8, 0.0, 0.8));
                 this.move(MoverType.SELF, this.getDeltaMovement());
@@ -94,20 +93,25 @@ public class VillagerTankEntity extends VehicleBaseEntity {
         }
     }
 
-    private void handleDriving(ServerPlayer player, Input input) {
+    private void handleDriving(LivingEntity driver) {
+        boolean left = isInputLeft(driver);
+        boolean right = isInputRight(driver);
+        boolean forward = isInputForward(driver);
+        boolean backward = isInputBackward(driver);
+
         // Turning
-        if (input.left()) {
-            this.setYRot(this.getYRot() - 2.8f);
-        } else if (input.right()) {
-            this.setYRot(this.getYRot() + 2.8f);
+        if (left) {
+            this.setYRot(this.getYRot() - 3.0f);
+        } else if (right) {
+            this.setYRot(this.getYRot() + 3.0f);
         }
 
         // Throttle
         float targetSpeed = 0.0f;
-        if (input.forward()) {
-            targetSpeed = 0.36f;
-        } else if (input.backward()) {
-            targetSpeed = -0.22f;
+        if (forward) {
+            targetSpeed = 0.42f;
+        } else if (backward) {
+            targetSpeed = -0.25f;
         }
 
         this.driveSpeed = Mth.lerp(0.2f, this.driveSpeed, targetSpeed);
@@ -116,7 +120,7 @@ public class VillagerTankEntity extends VehicleBaseEntity {
         double vx = Mth.sin(radYaw) * this.driveSpeed;
         double vz = Mth.cos(radYaw) * this.driveSpeed;
 
-        Vec3 motion = new Vec3(vx, this.onGround() ? 0.0 : -0.08, vz);
+        Vec3 motion = new Vec3(vx, this.onGround() ? 0.0 : -0.15, vz);
         this.setDeltaMovement(motion);
         this.move(MoverType.SELF, motion);
 

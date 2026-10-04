@@ -11,6 +11,16 @@ public class ModMessages {
 
     public static void initialize() {
         PayloadTypeRegistry.serverboundPlay().register(VehicleActionPayload.TYPE, VehicleActionPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(VehicleInputPayload.TYPE, VehicleInputPayload.CODEC);
+
+        ServerPlayNetworking.registerGlobalReceiver(VehicleInputPayload.TYPE, (payload, context) -> {
+            context.server().execute(() -> {
+                Entity vehicle = context.player().getVehicle();
+                if (vehicle instanceof com.villagernews.entity.VehicleBaseEntity baseVehicle) {
+                    baseVehicle.updateInputs(payload);
+                }
+            });
+        });
 
         ServerPlayNetworking.registerGlobalReceiver(VehicleActionPayload.TYPE, (payload, context) -> {
             context.server().execute(() -> {
