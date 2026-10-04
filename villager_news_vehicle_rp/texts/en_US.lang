@@ -3,24 +3,20 @@ pack.description=Villager News Vehicle Addon featuring the Villager Helicopter, 
 
 entity.renderphoenix:helicopter.name=Villager News Helicopter
 item.spawn_egg.entity.renderphoenix:helicopter.name=Spawn Villager News Helicopter
-item.renderphoenix:helicopter.name=Villager News Helicopter
 
 entity.renderphoenix:boat.name=Villager News Boat
 item.spawn_egg.entity.renderphoenix:boat.name=Spawn Villager News Boat
-item.renderphoenix:boat.name=Villager News Boat
 
 entity.renderphoenix:firefighter.name=Villager News Firefighter
 item.spawn_egg.entity.renderphoenix:firefighter.name=Spawn Villager News Firefighter
-item.renderphoenix:firefighter.name=Villager News Firefighter
 
 entity.renderphoenix:tank.name=Villager News Tank
 item.spawn_egg.entity.renderphoenix:tank.name=Spawn Villager News Tank
-item.renderphoenix:tank.name=Villager News Tank
 
 entity.renderphoenix:plane.name=Daladas Plane
 item.spawn_egg.entity.renderphoenix:plane.name=Spawn Daladas Plane
-item.renderphoenix:plane.name=Daladas Plane
 
+action.interact.ride.helicopter=Fly Helicopter
 action.interact.ride.boat=Board Vehicle
 action.interact.ride.firefighter=Drive Firefighter
 action.interact.ride.tank=Drive Tank

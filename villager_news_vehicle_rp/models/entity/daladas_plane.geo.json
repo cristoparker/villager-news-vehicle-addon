@@ -16,6 +16,23 @@
 			},
 			"bones": [
 				{
+					"name": "all_vertical_steer",
+					"pivot": [
+						0,
+						0,
+						5
+					]
+				},
+				{
+					"name": "all_horizontal_steer",
+					"parent": "all_vertical_steer",
+					"pivot": [
+						0,
+						0,
+						5
+					]
+				},
+				{
 					"name": "villager",
 					"pivot": [
 						0,
@@ -26,7 +43,8 @@
 						-90,
 						-57.5,
 						90
-					]
+					],
+					"parent": "all_horizontal_steer"
 				},
 				{
 					"name": "body",
@@ -250,7 +268,8 @@
 						0,
 						0,
 						5
-					]
+					],
+					"parent": "all_horizontal_steer"
 				},
 				{
 					"name": "plane_body3",
@@ -5661,7 +5680,8 @@
 						0,
 						0,
 						39
-					]
+					],
+					"parent": "all_horizontal_steer"
 				},
 				{
 					"name": "villager17",
@@ -8285,7 +8305,8 @@
 						-10.17431,
 						-4,
 						22.00761
-					]
+					],
+					"parent": "all_horizontal_steer"
 				},
 				{
 					"name": "wing",
@@ -11766,7 +11787,8 @@
 						10.17431,
 						-4,
 						22.00761
-					]
+					],
+					"parent": "all_horizontal_steer"
 				},
 				{
 					"name": "wing5",

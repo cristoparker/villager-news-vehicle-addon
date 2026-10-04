@@ -1,0 +1,42 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.villager_helicopter.sound": {
+      "states": {
+        "default": {
+          "transitions": [
+            {
+              "standby": "query.has_rider"
+            }
+          ]
+        },
+        "standby": {
+          "animations": [
+            "engine_sound.standby"
+          ],
+          "transitions": [
+            {
+              "default": "!query.has_rider"
+            },
+            {
+              "flying": "query.has_rider && query.property('renderphoenix:heli_flying')"
+            }
+          ]
+        },
+        "flying": {
+          "animations": [
+            "engine_sound"
+          ],
+          "transitions": [
+            {
+              "default": "!query.has_rider"
+            },
+            {
+              "standby": "!query.property('renderphoenix:heli_flying')"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

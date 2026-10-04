@@ -24,8 +24,17 @@
 					]
 				},
 				{
-					"name": "helicopter_body",
+					"name": "helicopter_tilt",
 					"parent": "root",
+					"pivot": [
+						0,
+						24,
+						0
+					]
+				},
+				{
+					"name": "helicopter_body",
+					"parent": "helicopter_tilt",
 					"pivot": [
 						0,
 						0,
@@ -4198,7 +4207,7 @@
 				},
 				{
 					"name": "back_propeller",
-					"parent": "root",
+					"parent": "helicopter_tilt",
 					"pivot": [
 						10,
 						34,
@@ -4437,7 +4446,7 @@
 				},
 				{
 					"name": "main_propeller",
-					"parent": "root",
+					"parent": "helicopter_tilt",
 					"pivot": [
 						0,
 						70,

@@ -10,20 +10,24 @@ An authentic, fully-featured **Villager News Vehicle Addon** for Minecraft Bedro
 ## ✨ Included Vehicles & Features
 
 ### 1. 🚁 Villager News Helicopter (`renderphoenix:helicopter`)
-- **Iconic 3D Model**: 171-bone full custom model made of villagers linked together into a helicopter chassis.
+- **Iconic 3D Model**: 173-bone full custom model made of villagers linked together into a helicopter chassis with dedicated 3D tilt bone.
+- **Advanced 6-DOF Flight Physics**:
+  - **Vertical Collective**: Hold **Jump** (Spacebar / A / X) to ascend smoothly; look downward sharply to descend smoothly.
+  - **Rock-Solid Aerodynamic Hover**: Releasing controls holds altitude stably with realistic aerodynamic hover micro-bobbing.
+  - **Cyclic Horizontal Movement (WASD)**:
+    - Press **W**: Leans nose forward (-20° pitch) and propels forward.
+    - Press **S**: Leans nose backward (+16° pitch) and brakes/reverses.
+    - Press **A / D**: Banks laterally left/right (±16° roll) for realistic helicopter strafing.
+  - **Smooth Yaw Heading**: Rotates smoothly with inertia to track your look direction.
+  - **Authentic Rotor Audio**: Custom rhythmic dual-frequency chopper rotor acoustics that dynamically transition between ground idle and fast high-RPM flight.
 - **Animated Dual Propellers**:
-  - **Main Rotor (`main_propeller`)**: Quad-villager rotor blades spinning smoothly horizontally in the X-Z plane at high RPM.
+  - **Main Rotor (`main_propeller`)**: Quad-villager rotor blades spinning at high RPM.
   - **Tail Rotor (`back_propeller`)**: Tail stabilization villager rotor spinning rapidly in the Y-Z plane.
-- **Player-Controlled 3D Flight**:
-  - Steer in 3D space in the direction you look using standard movement controls (WASD).
-  - Hold **Jump** (Spacebar / A / X) to ascend vertically.
-  - Player cockpit seat positioned precisely at `[0, 0.5, -0.6]`.
 - **Villager Pilot AI (Random Wandering Flight)**:
   - Villagers can board the helicopter when nearby or when invited using an **Emerald**.
-  - When piloted by a villager, it activates autonomous random flight AI (`minecraft:behavior.random_fly`) and takes off across the sky!
-- **Auto-Landing & Dismount Safety**:
-  - Real-time animation controller monitors rider presence (`query.has_rider`).
-  - When riders dismount, gravity re-engages and the helicopter safely touches down on the ground.
+  - When piloted by a villager, it activates autonomous random flight AI (`minecraft:behavior.random_fly`)!
+- **Auto-Landing & Touchdown**:
+  - Touch down safely on ground or water, automatically re-engaging landing physics (`has_gravity: true`).
 - **Hitbox**:
   - Custom hit test: `width: 3.4`, `height: 4`, `pivot: [0, 2, -0.6]`.
 
@@ -83,15 +87,23 @@ An authentic, fully-featured **Villager News Vehicle Addon** for Minecraft Bedro
 ---
 
 ### 5. ✈️ Daladas Plane (`renderphoenix:plane`)
-- **Iconic 3D Model**: Massive 469-bone custom airliner constructed entirely out of villagers forming the fuselage, swept wings, and tail fin straight from the legendary *Daladas Airlines* episode!
+- **Iconic 3D Model**: Massive 471-bone custom airliner constructed entirely out of villagers forming the fuselage, swept wings, and tail fin straight from the legendary *Daladas Airlines* episode!
 - **Exclusive Librarian Texture**:
   - Styled with the custom `librarian.png` texture as requested for Daladas.
-- **Player Seat & Flight Controls**:
-  - Cockpit seat positioned precisely at `[0, 0.3, 5]`.
-  - Steer in 3D air space with WASD controls, holding jump to climb altitude.
-  - Smooth landing physics with gravity re-engaging upon player dismount.
+- **Full Vanilla Vehicles Flight Mechanics**:
+  - Ground roll taxi & acceleration: Hold **W** to accelerate along the runway.
+  - Automatic lift-off transition to full 3D flight mode with gravity disengagement (`has_gravity: false`).
+  - Smooth view-direction navigation and banking: The entire aircraft dynamically tilts and banks left/right when steering.
+  - Realistic pitch climbing and diving via view direction.
+  - **No Fuel Required**: Direct, seamless flight anytime without needing redstone or fuel items.
+  - **Clean Aero Dynamics**: No distracting smoke trails or particle systems.
+- **Aerial Barrel Roll Trick**:
+  - Attack / Punch (left-click) while flying to execute an authentic aerial barrel roll in your steering direction!
+  - Includes cinematic third-person camera transitions and continuous roll impulse.
+- **Smooth Landing & Auto-Dismount Safety**:
+  - Safe touchdown upon landing on ground or water, automatically re-engaging ground physics (`has_gravity: true`).
 - **Air-to-Ground Missile Cannon**:
-  - Right-click / tap while flying to launch Villager Missiles in the direction you look!
+  - Right-click / tap **Shoot Missile** while flying to launch Villager Missiles in the direction you look!
 - **Hitbox**:
   - Custom hit test: `width: 3.7`, `height: 2.0`, `pivot: [0, 1, 0]`.
 
@@ -162,17 +174,25 @@ update.bat
   - 🚤 **Villager News Boat Spawn Egg**
   - 🚒 **Villager News Firefighter Spawn Egg**
   - 🪖 **Villager News Tank Spawn Egg**
+  - ✈️ **Spawn Daladas Plane**
 - **Commands**:
   ```mcfunction
   /summon renderphoenix:helicopter
   /summon renderphoenix:boat
   /summon renderphoenix:firefighter
   /summon renderphoenix:tank
+  /summon renderphoenix:plane
   ```
 - **Controls (Helicopter)**:
   - Right-click / tap **Fly Helicopter** to enter the pilot seat.
-  - Look where you want to go and press **WASD**.
-  - Hold **Space / Jump** to ascend.
+  - Hold **Space / Jump** to lift off and ascend smoothly into the sky.
+  - Look down sharply to descend smoothly.
+  - Release controls to hold altitude in a stable aerodynamic hover.
+  - Press **W** to lean forward (-20° pitch) and propel forward.
+  - Press **S** to lean backward (+16° pitch) and reverse/brake.
+  - Press **A / D** to bank laterally (±16° roll) and strafe sideways.
+  - Look around to turn and steer the helicopter heading smoothly.
+  - Descend to the ground to land safely (automatically re-engages ground physics).
   - Sneak / Shift to dismount.
 - **Controls (Boat)**:
   - Right-click / tap **Board Vehicle** to enter.
@@ -185,7 +205,16 @@ update.bat
 - **Controls (Tank)**:
   - Right-click / tap **Drive Tank** to mount the commander hatch on top of the turret at `[0, 4.8, 1.5]`.
   - Steer with **WASD** to drive across rough terrain.
+  - Left-click to fire villager cannon missiles.
   - Look around to aim the rotating villager cannon.
+  - Sneak / Shift to dismount.
+- **Controls (Daladas Plane)**:
+  - Right-click / tap **Fly Daladas Plane** to enter the cockpit.
+  - Hold **W** to accelerate along the runway until taking off into the air.
+  - Look in 3D space to smoothly steer, bank, climb, and dive.
+  - Left-click / Attack while flying to perform an **aerial barrel roll trick**!
+  - Right-click / tap **Shoot Missile** to launch Villager Missiles.
+  - Touch down on ground or water to land smoothly.
   - Sneak / Shift to dismount.
 - **Villager Boarding**:
   - Villagers can enter when nearby, or hold an **Emerald** and interact to invite the nearest villager aboard!

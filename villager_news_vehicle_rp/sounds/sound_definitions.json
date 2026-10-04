@@ -1,0 +1,60 @@
+{
+  "format_version": "1.14.0",
+  "sound_definitions": {
+    "renderphoenix.vehicle.plane.engine": {
+      "category": "neutral",
+      "min_distance": 1.0,
+      "max_distance": 25.0,
+      "sounds": [
+        { "name": "sounds/plane/engine1", "volume": 0.5, "stream": false, "is3D": true },
+        { "name": "sounds/plane/engine2", "volume": 0.5, "stream": false, "is3D": true },
+        { "name": "sounds/plane/engine3", "volume": 0.5, "stream": false, "is3D": true },
+        { "name": "sounds/plane/engine4", "volume": 0.5, "stream": false, "is3D": true },
+        { "name": "sounds/plane/engine5", "volume": 0.5, "stream": false, "is3D": true },
+        { "name": "sounds/plane/engine6", "volume": 0.5, "stream": false, "is3D": true }
+      ]
+    },
+    "renderphoenix.vehicle.plane.engine.close": {
+      "category": "neutral",
+      "min_distance": 1.0,
+      "max_distance": 25.0,
+      "sounds": [
+        { "name": "sounds/plane/engine1", "volume": 0.3, "stream": false, "is3D": false },
+        { "name": "sounds/plane/engine2", "volume": 0.3, "stream": false, "is3D": false },
+        { "name": "sounds/plane/engine3", "volume": 0.3, "stream": false, "is3D": false },
+        { "name": "sounds/plane/engine4", "volume": 0.3, "stream": false, "is3D": false },
+        { "name": "sounds/plane/engine5", "volume": 0.3, "stream": false, "is3D": false },
+        { "name": "sounds/plane/engine6", "volume": 0.3, "stream": false, "is3D": false }
+      ]
+    },
+    "renderphoenix.vehicle.plane.engine.standby": {
+      "category": "ambient",
+      "min_distance": 1.0,
+      "max_distance": 15.0,
+      "sounds": [
+        { "name": "sounds/plane/engine1", "volume": 0.25, "pitch": 0.7, "stream": false },
+        { "name": "sounds/plane/engine2", "volume": 0.25, "pitch": 0.7, "stream": false },
+        { "name": "sounds/plane/engine3", "volume": 0.25, "pitch": 0.7, "stream": false },
+        { "name": "sounds/plane/engine4", "volume": 0.25, "pitch": 0.7, "stream": false },
+        { "name": "sounds/plane/engine5", "volume": 0.25, "pitch": 0.7, "stream": false },
+        { "name": "sounds/plane/engine6", "volume": 0.25, "pitch": 0.7, "stream": false }
+      ]
+    },
+    "renderphoenix.vehicle.helicopter.rotor": {
+      "category": "neutral",
+      "min_distance": 1.0,
+      "max_distance": 30.0,
+      "sounds": [
+        { "name": "sounds/helicopter/rotor_fast", "volume": 0.6, "stream": false, "is3D": true }
+      ]
+    },
+    "renderphoenix.vehicle.helicopter.standby": {
+      "category": "ambient",
+      "min_distance": 1.0,
+      "max_distance": 20.0,
+      "sounds": [
+        { "name": "sounds/helicopter/rotor_idle", "volume": 0.35, "stream": false, "is3D": true }
+      ]
+    }
+  }
+}

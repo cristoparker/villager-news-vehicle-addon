@@ -12,6 +12,41 @@
       "geometry": {
         "default": "geometry.renderphoenix.plane"
       },
+      "animations": {
+        "steer_flying_controller": "controller.animation.renderphoenix.plane_steer",
+        "steer_flying": "animation.renderphoenix.plane_steer",
+        "crashing": "animation.renderphoenix.plane_crashing",
+        "trick_right": "animation.renderphoenix.plane_trick_right",
+        "trick_left": "animation.renderphoenix.plane_trick_left",
+        "engine_controller": "controller.animation.renderphoenix.plane_engine",
+        "engine_sound": "animation.renderphoenix.plane.engine_sound",
+        "engine_sound.close": "animation.renderphoenix.plane.engine_sound.close",
+        "engine_sound.standby": "animation.renderphoenix.plane.engine_sound.standby"
+      },
+      "scripts": {
+        "should_update_bones_and_effects_offscreen": true,
+        "animate": [
+          "steer_flying_controller",
+          "engine_controller"
+        ],
+        "initialize": [
+          "v.horizontal_steer = 0;",
+          "v.vertical_steer = 0;"
+        ],
+        "pre_animation": [
+          "variable.pre_body_rot = query.has_player_rider ? (query.rider_body_y_rotation(0) - query.body_y_rotation) : 0;",
+          "variable.body_rot = math.mod(variable.pre_body_rot, 360);",
+          "(variable.body_rot > 180) ? (variable.body_rot = variable.body_rot - 360);",
+          "(variable.body_rot < -180) ? (variable.body_rot = variable.body_rot + 360);",
+          "v.horizontal_steer = -math.clamp(variable.body_rot * query.has_player_rider, -70, 70) * 1.1 * query.modified_move_speed;",
+          "v.vertical_steer = math.clamp(query.body_x_rotation(2) * 1, -70, 70);"
+        ]
+      },
+      "sound_effects": {
+        "engine": "renderphoenix.vehicle.plane.engine",
+        "engine.close": "renderphoenix.vehicle.plane.engine.close",
+        "engine.standby": "renderphoenix.vehicle.plane.engine.standby"
+      },
       "render_controllers": [
         "controller.render.plane"
       ],

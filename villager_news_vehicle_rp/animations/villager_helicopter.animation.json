@@ -6,10 +6,36 @@
       "animation_length": 1.0,
       "bones": {
         "main_propeller": {
-          "rotation": [0, "query.life_time * 1440", 0]
+          "rotation": [0, "query.life_time * 1800", 0]
         },
         "back_propeller": {
-          "rotation": ["query.life_time * 1440", 0, 0]
+          "rotation": ["query.life_time * 1800", 0, 0]
+        }
+      }
+    },
+    "animation.villager_helicopter.tilt": {
+      "loop": true,
+      "bones": {
+        "helicopter_tilt": {
+          "rotation": ["v.pitch_tilt", 0, "v.roll_tilt"]
+        }
+      }
+    },
+    "animation.villager_helicopter.engine_sound": {
+      "animation_length": 0.8,
+      "loop": true,
+      "sound_effects": {
+        "0.0": {
+          "effect": "rotor"
+        }
+      }
+    },
+    "animation.villager_helicopter.engine_sound.standby": {
+      "animation_length": 1.0,
+      "loop": true,
+      "sound_effects": {
+        "0.0": {
+          "effect": "rotor.standby"
         }
       }
     }

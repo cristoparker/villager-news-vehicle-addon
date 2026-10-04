@@ -6,13 +6,42 @@
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
-      "animations": {
-        "flight_controller": "controller.animation.villager_helicopter.flight"
-      },
-      "scripts": {
-        "animate": [
-          "flight_controller"
-        ]
+      "properties": {
+        "renderphoenix:heli_pitch": {
+          "type": "float",
+          "range": [
+            -45.0,
+            45.0
+          ],
+          "default": 0.0,
+          "client_sync": true
+        },
+        "renderphoenix:heli_roll": {
+          "type": "float",
+          "range": [
+            -45.0,
+            45.0
+          ],
+          "default": 0.0,
+          "client_sync": true
+        },
+        "renderphoenix:heli_flying": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        },
+        "renderphoenix:wasd": {
+          "type": "enum",
+          "values": [
+            "w",
+            "a",
+            "s",
+            "d",
+            "none"
+          ],
+          "default": "none",
+          "client_sync": true
+        }
       }
     },
     "component_groups": {
@@ -22,19 +51,17 @@
           "has_collision": true
         },
         "minecraft:movement": {
-          "value": 0.0
-        }
+          "value": 0.22
+        },
+        "minecraft:movement.basic": {
+          "max_turn": 30.0
+        },
+        "minecraft:navigation.walk": {
+          "can_path_over_water": true
+        },
+        "minecraft:input_ground_controlled": {}
       },
       "renderphoenix:player_flight": {
-        "minecraft:type_family": {
-          "family": [
-            "villager_helicopter",
-            "inanimate",
-            "vehicle",
-            "helicopter_flying",
-            "player_piloted"
-          ]
-        },
         "minecraft:physics": {
           "has_gravity": false,
           "has_collision": true
@@ -51,10 +78,10 @@
         },
         "minecraft:input_air_controlled": {
           "strafe_speed_modifier": 0.85,
-          "backwards_movement_modifier": 0.5
+          "backwards_movement_modifier": 0.7
         },
         "minecraft:vertical_movement_action": {
-          "vertical_velocity": 0.6
+          "vertical_velocity": 0.55
         }
       },
       "renderphoenix:villager_flight": {
@@ -135,9 +162,11 @@
           }
         ]
       },
-      "minecraft:knockback_resistance": {
-        "value": 1.0
+      "minecraft:horse.jump_strength": {
+        "value": 0.0
       },
+      "minecraft:can_power_jump": {},
+      "minecraft:jump.static": {},
       "minecraft:pushable": {
         "is_pushable": true,
         "is_pushable_by_piston": true
@@ -152,8 +181,11 @@
           "player",
           "villager"
         ],
-        "interact_text": "action.interact.ride.boat",
+        "interact_text": "action.interact.ride.helicopter",
         "controlling_seat": 0,
+        "crouching_skip_interact": true,
+        "pull_in_entities": true,
+        "rider_can_interact": true,
         "seats": [
           {
             "position": [
@@ -198,9 +230,14 @@
           "component_groups": [
             "renderphoenix:grounded"
           ]
+        },
+        "set_property": {
+          "renderphoenix:heli_pitch": 0.0,
+          "renderphoenix:heli_roll": 0.0,
+          "renderphoenix:heli_flying": false
         }
       },
-      "renderphoenix:player_mount": {
+      "renderphoenix:enter_flight_mode": {
         "remove": {
           "component_groups": [
             "renderphoenix:grounded",
@@ -211,6 +248,27 @@
           "component_groups": [
             "renderphoenix:player_flight"
           ]
+        },
+        "set_property": {
+          "renderphoenix:heli_flying": true
+        }
+      },
+      "renderphoenix:enter_ground_mode": {
+        "remove": {
+          "component_groups": [
+            "renderphoenix:player_flight",
+            "renderphoenix:villager_flight"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "renderphoenix:grounded"
+          ]
+        },
+        "set_property": {
+          "renderphoenix:heli_flying": false,
+          "renderphoenix:heli_pitch": 0.0,
+          "renderphoenix:heli_roll": 0.0
         }
       },
       "renderphoenix:villager_mount": {
@@ -229,37 +287,9 @@
           "component_groups": [
             "renderphoenix:villager_flight"
           ]
-        }
-      },
-      "renderphoenix:villager_takeoff": {
-        "remove": {
-          "component_groups": [
-            "renderphoenix:grounded",
-            "renderphoenix:player_flight"
-          ]
         },
-        "add": {
-          "component_groups": [
-            "renderphoenix:villager_flight"
-          ]
-        }
-      },
-      "renderphoenix:board_nearby_villager": {
-        "run_command": {
-          "command": [
-            "/ride @e[type=villager,r=6,c=1] start_riding @s"
-          ]
-        },
-        "remove": {
-          "component_groups": [
-            "renderphoenix:grounded",
-            "renderphoenix:player_flight"
-          ]
-        },
-        "add": {
-          "component_groups": [
-            "renderphoenix:villager_flight"
-          ]
+        "set_property": {
+          "renderphoenix:heli_flying": true
         }
       },
       "renderphoenix:on_dismount": {
@@ -273,7 +303,21 @@
           "component_groups": [
             "renderphoenix:grounded"
           ]
+        },
+        "set_property": {
+          "renderphoenix:heli_flying": false,
+          "renderphoenix:heli_pitch": 0.0,
+          "renderphoenix:heli_roll": 0.0
         }
+      },
+      "renderphoenix:board_nearby_villager": {
+        "run_command": {
+          "command": [
+            "/ride @e[type=villager,r=6,c=1] start_riding @s",
+            "playsound random.pop @a ~ ~ ~ 1 1"
+          ]
+        },
+        "trigger": "renderphoenix:villager_mount"
       }
     }
   }

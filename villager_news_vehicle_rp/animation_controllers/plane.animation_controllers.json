@@ -1,0 +1,83 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.renderphoenix.plane_steer": {
+      "states": {
+        "default": {
+          "transitions": [
+            {
+              "vertical_rotation": "query.property('renderphoenix:plane_state') == 'flying'"
+            }
+          ],
+          "blend_transition": 0.2
+        },
+        "vertical_rotation": {
+          "animations": [
+            "steer_flying"
+          ],
+          "transitions": [
+            {
+              "default": "query.property('renderphoenix:plane_state') == 'stationary'"
+            },
+            {
+              "crashing": "query.property('renderphoenix:plane_state') == 'crashing'"
+            }
+          ],
+          "blend_transition": 0.5
+        },
+        "crashing": {
+          "animations": [
+            "crashing"
+          ],
+          "transitions": [
+            {
+              "default": "query.property('renderphoenix:plane_state') == 'stationary'"
+            },
+            {
+              "vertical_rotation": "query.property('renderphoenix:plane_state') == 'flying'"
+            }
+          ],
+          "blend_transition": 0.5
+        }
+      }
+    },
+    "controller.animation.renderphoenix.plane_engine": {
+      "states": {
+        "default": {
+          "transitions": [
+            {
+              "standby": "query.has_player_rider"
+            }
+          ]
+        },
+        "standby": {
+          "animations": [
+            "engine_sound.standby"
+          ],
+          "transitions": [
+            {
+              "default": "!query.has_player_rider"
+            },
+            {
+              "go": "query.has_player_rider && query.ground_speed > 1.5"
+            }
+          ]
+        },
+        "go": {
+          "animations": [
+            "engine_sound",
+            "engine_sound.close"
+          ],
+          "transitions": [
+            {
+              "default": "!query.has_player_rider"
+            },
+            {
+              "standby": "query.ground_speed <= 1.5"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

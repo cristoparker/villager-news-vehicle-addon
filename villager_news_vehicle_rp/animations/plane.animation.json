@@ -1,0 +1,75 @@
+{
+  "format_version": "1.10.0",
+  "animations": {
+    "animation.renderphoenix.plane_steer": {
+      "loop": true,
+      "bones": {
+        "all_horizontal_steer": {
+          "rotation": [0, 0, "v.horizontal_steer"]
+        },
+        "all_vertical_steer": {
+          "rotation": ["v.vertical_steer", 0, 0]
+        }
+      }
+    },
+    "animation.renderphoenix.plane_crashing": {
+      "loop": "hold_on_last_frame",
+      "animation_length": 2.4,
+      "bones": {
+        "all_vertical_steer": {
+          "rotation": [89, 0, 0]
+        }
+      }
+    },
+    "animation.renderphoenix.plane_trick_right": {
+      "loop": "hold_on_last_frame",
+      "animation_length": 0.5,
+      "anim_time_update": "query.anim_time + query.delta_time * 0.5",
+      "bones": {
+        "all_horizontal_steer": {
+          "rotation": [0, 0, "math.cos(q.anim_time * 360) * 180 + 180"]
+        }
+      }
+    },
+    "animation.renderphoenix.plane_trick_left": {
+      "loop": "hold_on_last_frame",
+      "animation_length": 0.5,
+      "anim_time_update": "query.anim_time + query.delta_time * 0.5",
+      "bones": {
+        "all_horizontal_steer": {
+          "rotation": [0, 0, "math.cos(q.anim_time * 360) * -180 + 180"]
+        }
+      }
+    },
+    "animation.renderphoenix.plane.engine_sound": {
+      "blend_weight": "query.camera_distance_range_lerp(8, 9) - query.camera_distance_range_lerp(17, 18)",
+      "animation_length": 0.39,
+      "loop": true,
+      "sound_effects": {
+        "0.0": {
+          "effect": "engine"
+        }
+      }
+    },
+    "animation.renderphoenix.plane.engine_sound.close": {
+      "blend_weight": "1 - query.camera_distance_range_lerp(8, 9)",
+      "animation_length": 0.39,
+      "loop": true,
+      "sound_effects": {
+        "0.0": {
+          "effect": "engine.close"
+        }
+      }
+    },
+    "animation.renderphoenix.plane.engine_sound.standby": {
+      "animation_length": 0.53,
+      "blend_weight": "1 - query.camera_distance_range_lerp(10, 11)",
+      "loop": true,
+      "sound_effects": {
+        "0.0": {
+          "effect": "engine.standby"
+        }
+      }
+    }
+  }
+}

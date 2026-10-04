@@ -15,3 +15,7 @@ scratch/
 # Minecraft build / export temp
 *.mcpack
 *.mcaddon
+
+# Reference addons
+Vanilla Vehicles (addon)/
+Vanilla Vehicles (addon)

@@ -13,12 +13,31 @@
         "default": "geometry.renderphoenix.helicopter"
       },
       "animations": {
-        "propellers": "animation.villager_helicopter.propellers"
+        "propellers": "animation.villager_helicopter.propellers",
+        "tilt": "animation.villager_helicopter.tilt",
+        "sound_controller": "controller.animation.villager_helicopter.sound",
+        "engine_sound": "animation.villager_helicopter.engine_sound",
+        "engine_sound.standby": "animation.villager_helicopter.engine_sound.standby"
       },
       "scripts": {
+        "should_update_bones_and_effects_offscreen": true,
         "animate": [
-          "propellers"
+          "propellers",
+          "tilt",
+          "sound_controller"
+        ],
+        "initialize": [
+          "v.pitch_tilt = 0;",
+          "v.roll_tilt = 0;"
+        ],
+        "pre_animation": [
+          "v.pitch_tilt = query.property('renderphoenix:heli_pitch');",
+          "v.roll_tilt = query.property('renderphoenix:heli_roll');"
         ]
+      },
+      "sound_effects": {
+        "rotor": "renderphoenix.vehicle.helicopter.rotor",
+        "rotor.standby": "renderphoenix.vehicle.helicopter.standby"
       },
       "render_controllers": [
         "controller.render.villager_helicopter"
