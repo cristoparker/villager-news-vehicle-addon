@@ -6,6 +6,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
@@ -28,6 +29,19 @@ public class VillagerMissileEntity extends ThrowableProjectile {
             this.setOwner(owner);
         }
         this.setPos(x, y, z);
+    }
+
+    @Override
+    protected boolean canHitEntity(Entity entity) {
+        if (this.getOwner() != null) {
+            if (entity == this.getOwner() || this.getOwner().isPassengerOfSameVehicle(entity)) {
+                return false;
+            }
+            if (entity == this.getOwner().getVehicle()) {
+                return false;
+            }
+        }
+        return super.canHitEntity(entity);
     }
 
     @Override

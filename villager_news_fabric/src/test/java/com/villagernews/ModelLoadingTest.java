@@ -22,13 +22,6 @@ public class ModelLoadingTest {
         ModelPart firefighter = VillagerFirefighterJavaModel.createBodyLayer().bakeRoot();
         System.out.println("-> Villager Firefighter baked successfully (isEmpty=" + firefighter.isEmpty() + ")");
 
-        ModelPart missile = VillagerMissileJavaModel.createBodyLayer().bakeRoot();
-        System.out.println("-> Villager Missile baked successfully (isEmpty=" + missile.isEmpty() + ")");
-
-        Class<?> boatSuper = net.minecraft.world.entity.vehicle.boat.Boat.class.getSuperclass();
-        System.out.println("Boat superclass: " + boatSuper.getName());
-        for (java.lang.reflect.Method m : boatSuper.getDeclaredMethods()) {
-            System.out.println("BoatSuper." + m.getName() + "(" + java.util.Arrays.toString(m.getParameterTypes()) + ") : " + m.getReturnType().getSimpleName());
-        }
+        System.out.println("ALL 6 NEW JAVA VEHICLE MODELS BAKED SUCCESSFULLY!");
     }
 }

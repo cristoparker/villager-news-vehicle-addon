@@ -18,6 +18,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -38,7 +39,7 @@ public class VillagerFirefighterEntity extends VehicleBaseEntity {
 
     @Override
     public float maxUpStep() {
-        return 1.0f;
+        return 1.25f;
     }
 
     @Override
@@ -89,6 +90,11 @@ public class VillagerFirefighterEntity extends VehicleBaseEntity {
         Vec3 motion = new Vec3(vx, this.onGround() ? 0.0 : -0.08, vz);
         this.setDeltaMovement(motion);
         this.move(MoverType.SELF, motion);
+
+        // Emergency truck ramming collision
+        if (Math.abs(this.driveSpeed) > 0.08) {
+            this.applyRammingCollision(this.driveSpeed, 18.0f, 1.4);
+        }
     }
 
     /**
@@ -121,31 +127,37 @@ public class VillagerFirefighterEntity extends VehicleBaseEntity {
 
         serverLevel.playSound(null, sprayX, sprayY, sprayZ, SoundEvents.GENERIC_SPLASH, SoundSource.PLAYERS, 1.2f, 1.4f);
 
-        // Extinguish fires and cool blocks in line of fire
-        for (int dist = 1; dist <= 8; dist++) {
+        // Extinguish fires, cool blocks, and hydraulic blast push in line of fire
+        for (int dist = 1; dist <= 9; dist++) {
             BlockPos targetPos = BlockPos.containing(sprayX + view.x * dist, sprayY + view.y * dist, sprayZ + view.z * dist);
             if (serverLevel.getBlockState(targetPos).is(Blocks.FIRE) || serverLevel.getBlockState(targetPos).is(Blocks.SOUL_FIRE)) {
                 serverLevel.removeBlock(targetPos, false);
             }
             AABB area = new AABB(targetPos).inflate(1.2);
-            List<Entity> nearby = serverLevel.getEntities(this, area, e -> e.isOnFire() || e.getType().getDescriptionId().contains("blaze"));
+            List<Entity> nearby = serverLevel.getEntities(this, area, e ->
+                    !this.isPassengerOfSameVehicle(e) && e.isAlive() && !e.isSpectator());
             for (Entity e : nearby) {
-                e.clearFire();
-                if (e instanceof LivingEntity living && living.getType().getDescriptionId().contains("blaze")) {
-                    living.hurtServer(serverLevel, serverLevel.damageSources().drown(), 4.0f);
+                // Hydraulic push
+                e.push(view.x * 0.35, 0.12, view.z * 0.35);
+
+                if (e.isOnFire()) {
+                    e.clearFire();
+                }
+                if (e instanceof LivingEntity living && (living.getType().getDescriptionId().contains("blaze") || living.getType().getDescriptionId().contains("magma"))) {
+                    living.hurtServer(serverLevel, serverLevel.damageSources().drown(), 5.0f);
                 }
             }
         }
     }
 
     @Override
-    protected void positionRider(Entity passenger, Entity.MoveFunction callback) {
-        if (!this.hasPassenger(passenger)) return;
+    public int getMaxPassengers() {
+        return 1;
+    }
 
-        float radYaw = -this.getYRot() * Mth.DEG_TO_RAD;
-        double offsetX = Mth.sin(radYaw) * 0.5;
-        double offsetZ = Mth.cos(radYaw) * 0.5;
-
-        callback.accept(passenger, this.getX() + offsetX, this.getY() + 1.2, this.getZ() + offsetZ);
+    @Override
+    protected Vec3 getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float scale) {
+        // Bedrock seat position: [0, 4.1, 4.5]
+        return new Vec3(0.0, 4.1, 4.5).yRot(-this.getYRot() * Mth.DEG_TO_RAD);
     }
 }

@@ -2,11 +2,16 @@ package com.villagernews.entity;
 
 import com.villagernews.init.ModEntities;
 import com.villagernews.init.ModItems;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,6 +19,8 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.phys.Vec3;
 
 public class VillagerHelicopterEntity extends VehicleBaseEntity {
@@ -72,8 +79,8 @@ public class VillagerHelicopterEntity extends VehicleBaseEntity {
     }
 
     @Override
-    protected boolean canAddPassenger(Entity passenger) {
-        return this.getPassengers().size() < 2;
+    public int getMaxPassengers() {
+        return 1;
     }
 
     @Override
@@ -84,7 +91,8 @@ public class VillagerHelicopterEntity extends VehicleBaseEntity {
         LivingEntity driver = this.getControllingPassenger();
         Level level = this.level();
 
-        if (!level.isClientSide()) {
+        if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
+            detectRotorCollisions(serverLevel);
             if (driver instanceof ServerPlayer player) {
                 Input input = player.getLastClientInput();
                 handleFlight(player, input);
@@ -171,12 +179,68 @@ public class VillagerHelicopterEntity extends VehicleBaseEntity {
         this.setDeltaMovement(motion);
         this.move(MoverType.SELF, motion);
 
+        // Collision ramming
+        double hSpeed = Math.sqrt(this.currentVx * this.currentVx + this.currentVz * this.currentVz);
+        if (hSpeed > 0.18) {
+            this.applyRammingCollision(hSpeed, 12.0f, 1.2);
+        }
+
+        // Wall collision response (recoil & shield block sound)
+        if (isFlying() && this.horizontalCollision) {
+            this.currentVx *= -0.3f;
+            this.currentVz *= -0.3f;
+            if (this.level() instanceof ServerLevel sl) {
+                sl.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 1.0f, 0.8f);
+            }
+        }
+
+        // Hard landing impact detection
+        if ((onGround || this.verticalCollision) && this.currentVy < -0.28f && this.level() instanceof ServerLevel sl) {
+            sl.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 1.2f, 0.85f);
+            sl.sendParticles(ParticleTypes.POOF, this.getX(), this.getY(), this.getZ(), 20, 1.0, 0.1, 1.0, 0.05);
+        }
+
         // 5. Landing detection
         if (onGround && this.currentVy <= 0.05f && !wantsAscend && forwardInput == 0 && strafeInput == 0) {
             this.entityData.set(DATA_FLYING, false);
             this.currentVx = 0.0f;
             this.currentVz = 0.0f;
             this.currentVy = 0.0f;
+        }
+    }
+
+    /**
+     * Slices any entities touching the high-speed overhead rotor blades
+     */
+    private void detectRotorCollisions(ServerLevel serverLevel) {
+        if (!isFlying()) return;
+
+        AABB rotorBox = new AABB(
+                this.getX() - 3.2, this.getY() + 3.0, this.getZ() - 3.2,
+                this.getX() + 3.2, this.getY() + 4.4, this.getZ() + 3.2
+        );
+
+        java.util.List<LivingEntity> inRotor = serverLevel.getEntitiesOfClass(
+                LivingEntity.class,
+                rotorBox,
+                e -> !this.isPassengerOfSameVehicle(e) && e.isAlive() && !e.isSpectator()
+        );
+
+        for (LivingEntity victim : inRotor) {
+            double dx = victim.getX() - this.getX();
+            double dz = victim.getZ() - this.getZ();
+            double dist = Math.sqrt(dx * dx + dz * dz);
+            if (dist < 3.2) {
+                DamageSource source = this.getControllingPassenger() != null
+                        ? serverLevel.damageSources().mobAttack(this.getControllingPassenger())
+                        : serverLevel.damageSources().generic();
+                victim.hurtServer(serverLevel, source, 12.0f);
+                double pushX = dist > 0.01 ? (dx / dist) * 1.2 : 0.6;
+                double pushZ = dist > 0.01 ? (dz / dist) * 1.2 : 0.6;
+                victim.push(pushX, 0.35, pushZ);
+                serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK, victim.getX(), victim.getY() + 0.5, victim.getZ(), 3, 0.2, 0.2, 0.2, 0.0);
+                serverLevel.playSound(null, victim.getX(), victim.getY(), victim.getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.5f, 1.2f);
+            }
         }
     }
 
@@ -202,18 +266,8 @@ public class VillagerHelicopterEntity extends VehicleBaseEntity {
     }
 
     @Override
-    protected void positionRider(Entity passenger, Entity.MoveFunction callback) {
-        if (!this.hasPassenger(passenger)) return;
-
-        int index = this.getPassengers().indexOf(passenger);
-        float radYaw = -this.getYRot() * Mth.DEG_TO_RAD;
-
-        double forward = index == 0 ? 0.8 : -0.2;
-        double side = index == 0 ? -0.4 : 0.4;
-
-        double offsetX = Mth.sin(radYaw) * forward + Mth.cos(radYaw) * side;
-        double offsetZ = Mth.cos(radYaw) * forward - Mth.sin(radYaw) * side;
-
-        callback.accept(passenger, this.getX() + offsetX, this.getY() + 0.8, this.getZ() + offsetZ);
+    protected Vec3 getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float scale) {
+        // Bedrock seat position: [0, 0.5, -0.6]
+        return new Vec3(0.0, 0.5, -0.6).yRot(-this.getYRot() * Mth.DEG_TO_RAD);
     }
 }

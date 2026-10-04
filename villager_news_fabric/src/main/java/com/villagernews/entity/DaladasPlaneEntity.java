@@ -21,6 +21,7 @@ import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.phys.Vec3;
 
 public class DaladasPlaneEntity extends VehicleBaseEntity {
@@ -65,6 +66,11 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
     public DaladasPlaneEntity(Level level, double x, double y, double z) {
         super(ModEntities.DALADAS, level);
         this.setPos(x, y, z);
+    }
+
+    @Override
+    public float maxUpStep() {
+        return 1.0f;
     }
 
     @Override
@@ -162,6 +168,7 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
                     Vec3 groundMotion = new Vec3(Mth.sin(radYaw) * this.currentGroundSpeed, -0.04, Mth.cos(radYaw) * this.currentGroundSpeed);
                     this.setDeltaMovement(groundMotion);
                     this.move(MoverType.SELF, groundMotion);
+                    this.applyRammingCollision(this.currentGroundSpeed, 10.0f, 1.0);
 
                     this.takeoffTicks--;
                     boolean pullingUp = playerPitch < -6.0f || input.jump();
@@ -176,18 +183,6 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
                 }
             }
             case STATE_FLYING -> {
-                // Ground touchdown & landing detection
-                if (this.flightImmunityTicks <= 0 && (this.onGround() || this.isInWater())) {
-                    if (playerPitch > 30.0f && this.getDeltaMovement().length() > 0.8) {
-                        enterCrash();
-                        return;
-                    } else if (playerPitch <= 12.0f) {
-                        setPlaneState(STATE_STATIONARY);
-                        this.currentGroundSpeed = 0.0f;
-                        return;
-                    }
-                }
-
                 // Airspeed target
                 float targetSpeed = CRUISE_SPEED;
                 if (input.jump() || input.sprint()) {
@@ -238,10 +233,34 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
                 this.move(MoverType.SELF, targetFlightMotion);
 
                 this.entityData.set(DATA_SPEED, (float) targetFlightMotion.horizontalDistance());
+
+                // Ramming collision with airborne mobs / players
+                this.applyRammingCollision(targetSpeed, 14.0f, 1.4);
+
+                // High-speed wall/mountain and rough touchdown crash detection
+                if (this.flightImmunityTicks <= 0) {
+                    if (this.horizontalCollision) {
+                        enterCrash();
+                        return;
+                    }
+                    if (this.onGround() || this.isInWater() || this.verticalCollision) {
+                        if (playerPitch > 20.0f && this.getDeltaMovement().length() > 0.6) {
+                            enterCrash();
+                            return;
+                        } else if (playerPitch <= 12.0f) {
+                            setPlaneState(STATE_STATIONARY);
+                            this.currentGroundSpeed = 0.0f;
+                            return;
+                        }
+                    }
+                }
             }
             case STATE_CRASHING -> {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(0.85, 0.95, 0.85).add(0, -0.05, 0));
                 this.move(MoverType.SELF, this.getDeltaMovement());
+                if (this.level() instanceof ServerLevel sl) {
+                    sl.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, this.getX(), this.getY() + 0.5, this.getZ(), 4, 0.3, 0.3, 0.3, 0.02);
+                }
                 if (this.onGround() || this.isInWater()) {
                     setPlaneState(STATE_STATIONARY);
                     this.currentGroundSpeed = 0.0f;
@@ -288,7 +307,11 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
     private void enterCrash() {
         setPlaneState(STATE_CRASHING);
         if (this.level() instanceof ServerLevel serverLevel) {
-            serverLevel.explode(this, this.getX(), this.getY(), this.getZ(), 2.0f, false, Level.ExplosionInteraction.NONE);
+            serverLevel.explode(this, this.getX(), this.getY(), this.getZ(), 2.5f, false, Level.ExplosionInteraction.NONE);
+            serverLevel.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, this.getX(), this.getY(), this.getZ(), 30, 0.8, 0.8, 0.8, 0.08);
+            serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE, this.getX(), this.getY(), this.getZ(), 20, 0.5, 0.5, 0.5, 0.05);
+            serverLevel.playSound(null, this.getX(), this.getY(), this.getZ(),
+                    SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2.0f, 0.7f);
         }
         this.ejectPassengers();
     }
@@ -358,14 +381,14 @@ public class DaladasPlaneEntity extends VehicleBaseEntity {
     }
 
     @Override
-    protected void positionRider(Entity passenger, Entity.MoveFunction callback) {
-        if (!this.hasPassenger(passenger)) return;
+    public int getMaxPassengers() {
+        return 1;
+    }
 
-        // Cockpit position inside front fuselage: Y + 1.8, forward 5.2 blocks
-        float radYaw = -this.getYRot() * Mth.DEG_TO_RAD;
-        double offsetX = Mth.sin(radYaw) * 5.2;
-        double offsetZ = Mth.cos(radYaw) * 5.2;
-
-        callback.accept(passenger, this.getX() + offsetX, this.getY() + 1.8, this.getZ() + offsetZ);
+    @Override
+    protected Vec3 getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float scale) {
+        // Bedrock seat position: [0, 0.3, 5]
+        Vec3 localPos = new Vec3(0.0, 0.3, 5.0);
+        return localPos.xRot(-this.getXRot() * Mth.DEG_TO_RAD).yRot(-this.getYRot() * Mth.DEG_TO_RAD);
     }
 }

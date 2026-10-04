@@ -1386,11 +1386,11 @@ public class renderphoenix.firefighter<T extends Entity> extends EntityModel<T> 
 
 		PartDefinition leg81 = body41.addOrReplaceChild("leg81", CubeListBuilder.create().texOffs(0, 22).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(2.0F, -12.0F, 0.0F));
 
-		PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create(), PartPose.offset(0.0F, -24.0F, -139.0F));
+		PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create(), PartPose.offset(0.0F, -18.0F, -144.0F));
 
-		PartDefinition head34 = head.addOrReplaceChild("head34", CubeListBuilder.create().texOffs(0, 0).addBox(-12.0F, -30.0F, -4.0F, 24.0F, 30.0F, 24.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 7.0F, -21.0F));
+		PartDefinition head34 = head.addOrReplaceChild("head34", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, -6.5F, -4.0F, 8.0F, 10.0F, 8.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -3.5F, 0.0F));
 
-		PartDefinition nose34 = head34.addOrReplaceChild("nose34", CubeListBuilder.create().texOffs(24, 0).addBox(-3.0F, -7.0F, -10.0F, 6.0F, 12.0F, 6.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -2.0F, 0.0F));
+		PartDefinition nose34 = head34.addOrReplaceChild("nose34", CubeListBuilder.create().texOffs(24, 0).addBox(-1.0F, -1.0F, -6.0F, 2.0F, 4.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 1.5F, 0.0F));
 
 		PartDefinition wheel1 = root.addOrReplaceChild("wheel1", CubeListBuilder.create().texOffs(8, 0).addBox(-4.0F, -5.5F, -4.0F, 8.0F, 10.0F, 8.0F, new CubeDeformation(0.0F)), PartPose.offset(19.0F, 0.5F, -112.0F));
 

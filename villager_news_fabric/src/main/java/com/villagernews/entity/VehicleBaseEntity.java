@@ -39,18 +39,32 @@ public abstract class VehicleBaseEntity extends VehicleEntity {
     }
 
     @Override
-    public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
-        if (!this.level().isClientSide()) {
-            if (player.isSecondaryUseActive()) {
-                return InteractionResult.PASS;
-            }
-            if (this.canAddPassenger(player)) {
-                player.startRiding(this);
-                return InteractionResult.SUCCESS;
-            }
-        }
-        return InteractionResult.SUCCESS;
+    public boolean isPickable() {
+        return !this.isRemoved();
     }
+
+    @Override
+    public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
+        InteractionResult superResult = super.interact(player, hand, location);
+        if (superResult != InteractionResult.PASS) {
+            return superResult;
+        }
+        if (player.isSecondaryUseActive()) {
+            return InteractionResult.PASS;
+        }
+        if (!this.level().isClientSide()) {
+            return player.startRiding(this) ? InteractionResult.SUCCESS : InteractionResult.PASS;
+        } else {
+            return this.canAddPassenger(player) ? InteractionResult.SUCCESS : InteractionResult.PASS;
+        }
+    }
+
+    @Override
+    protected boolean canAddPassenger(Entity passenger) {
+        return this.getPassengers().size() < this.getMaxPassengers();
+    }
+
+    public abstract int getMaxPassengers();
 
     @Override
     public LivingEntity getControllingPassenger() {
@@ -69,12 +83,41 @@ public abstract class VehicleBaseEntity extends VehicleEntity {
 
     @Override
     public boolean canBeCollidedWith(Entity other) {
-        return true;
+        return canVehicleCollide(this, other);
     }
 
     @Override
     public boolean isPushable() {
         return true;
+    }
+
+    /**
+     * Detects entities in front of the vehicle and applies kinetic impact, damage, and knockback
+     */
+    protected void applyRammingCollision(double forwardSpeed, float damageMultiplier, double knockbackStrength) {
+        if (this.level().isClientSide() || !(this.level() instanceof ServerLevel serverLevel)) return;
+        if (Math.abs(forwardSpeed) < 0.15) return;
+
+        float radYaw = -this.getYRot() * net.minecraft.util.Mth.DEG_TO_RAD;
+        double dirX = net.minecraft.util.Mth.sin(radYaw) * Math.signum(forwardSpeed);
+        double dirZ = net.minecraft.util.Mth.cos(radYaw) * Math.signum(forwardSpeed);
+
+        net.minecraft.world.phys.AABB ramBox = this.getBoundingBox().inflate(0.5, 0.2, 0.5)
+                .expandTowards(dirX * 1.5, 0.0, dirZ * 1.5);
+
+        java.util.List<Entity> targets = serverLevel.getEntities(this, ramBox, e ->
+                !this.isPassengerOfSameVehicle(e) && e.isAlive() && !e.isSpectator());
+
+        for (Entity target : targets) {
+            float damage = (float) (Math.abs(forwardSpeed) * damageMultiplier);
+            DamageSource source = this.getControllingPassenger() != null
+                    ? serverLevel.damageSources().mobAttack(this.getControllingPassenger())
+                    : serverLevel.damageSources().generic();
+            if (target instanceof LivingEntity living) {
+                living.hurtServer(serverLevel, source, damage);
+            }
+            target.push(dirX * knockbackStrength, 0.25, dirZ * knockbackStrength);
+        }
     }
 
     @Override
@@ -101,16 +144,6 @@ public abstract class VehicleBaseEntity extends VehicleEntity {
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
-        Direction dir = this.getDirection();
-        if (dir.getAxis() == Direction.Axis.Y) {
-            return super.getDismountLocationForPassenger(passenger);
-        }
-        double offsetX = dir.getStepX() * 1.5;
-        double offsetZ = dir.getStepZ() * 1.5;
-        BlockPos checkPos = this.blockPosition().offset((int) offsetX, 0, (int) offsetZ);
-        if (this.level().getBlockState(checkPos).isAir()) {
-            return new Vec3(checkPos.getX() + 0.5, this.getY(), checkPos.getZ() + 0.5);
-        }
-        return new Vec3(this.getX(), this.getY() + 1.0, this.getZ());
+        return new Vec3(this.getX(), this.getBoundingBox().maxY, this.getZ());
     }
 }

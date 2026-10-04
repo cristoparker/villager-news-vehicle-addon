@@ -8,6 +8,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.phys.Vec3;
 
 public class ModEntities {
 
@@ -17,7 +18,8 @@ public class ModEntities {
             BuiltInRegistries.ENTITY_TYPE,
             DALADAS_KEY,
             EntityType.Builder.<DaladasPlaneEntity>of(DaladasPlaneEntity::new, MobCategory.MISC)
-                    .sized(5.0f, 2.5f)
+                    .sized(3.2f, 1.6f)
+                    .passengerAttachments(new Vec3(0.0, 0.3, 5.0))
                     .clientTrackingRange(16)
                     .updateInterval(1)
                     .build(DALADAS_KEY)
@@ -29,7 +31,8 @@ public class ModEntities {
             BuiltInRegistries.ENTITY_TYPE,
             HELICOPTER_KEY,
             EntityType.Builder.<VillagerHelicopterEntity>of(VillagerHelicopterEntity::new, MobCategory.MISC)
-                    .sized(3.0f, 3.0f)
+                    .sized(3.2f, 3.8f)
+                    .passengerAttachments(new Vec3(0.0, 0.5, -0.6))
                     .clientTrackingRange(16)
                     .updateInterval(1)
                     .build(HELICOPTER_KEY)
@@ -41,7 +44,8 @@ public class ModEntities {
             BuiltInRegistries.ENTITY_TYPE,
             TANK_KEY,
             EntityType.Builder.<VillagerTankEntity>of(VillagerTankEntity::new, MobCategory.MISC)
-                    .sized(3.2f, 2.8f)
+                    .sized(3.6f, 2.6f)
+                    .passengerAttachments(new Vec3(0.0, 3.7, 3.3))
                     .clientTrackingRange(16)
                     .updateInterval(1)
                     .build(TANK_KEY)
@@ -53,7 +57,13 @@ public class ModEntities {
             BuiltInRegistries.ENTITY_TYPE,
             BOAT_KEY,
             EntityType.Builder.<VillagerBoatEntity>of(VillagerBoatEntity::new, MobCategory.MISC)
-                    .sized(2.0f, 1.0f)
+                    .sized(2.8f, 1.6f)
+                    .passengerAttachments(
+                            new Vec3(0.0, 0.5, 1.7),
+                            new Vec3(0.0, 0.5, -0.5),
+                            new Vec3(0.0, 0.5, -2.0),
+                            new Vec3(0.0, 0.5, -3.0)
+                    )
                     .clientTrackingRange(16)
                     .updateInterval(1)
                     .build(BOAT_KEY)
@@ -65,7 +75,8 @@ public class ModEntities {
             BuiltInRegistries.ENTITY_TYPE,
             FIREFIGHTER_KEY,
             EntityType.Builder.<VillagerFirefighterEntity>of(VillagerFirefighterEntity::new, MobCategory.MISC)
-                    .sized(2.5f, 2.5f)
+                    .sized(3.2f, 3.0f)
+                    .passengerAttachments(new Vec3(0.0, 4.1, 4.5))
                     .clientTrackingRange(16)
                     .updateInterval(1)
                     .build(FIREFIGHTER_KEY)
