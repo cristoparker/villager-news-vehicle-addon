@@ -1,0 +1,17 @@
+{
+  "itemGroup.renderphoenix.vehicles": "Villager News Vehicle Mod",
+  "entity.renderphoenix.daladas": "Daladas Plane",
+  "item.renderphoenix.daladas": "Daladas Plane",
+  "entity.renderphoenix.helicopter": "Villager News Helicopter",
+  "item.renderphoenix.helicopter": "Villager News Helicopter",
+  "entity.renderphoenix.tank": "Villager News Tank",
+  "item.renderphoenix.tank": "Villager News Tank",
+  "entity.renderphoenix.boat": "Villager News Boat",
+  "item.renderphoenix.boat": "Villager News Boat",
+  "entity.renderphoenix.firefighter": "Villager News Firefighter",
+  "item.renderphoenix.firefighter": "Villager News Firefighter",
+  "entity.renderphoenix.missile": "Villager Missile",
+  "item.renderphoenix.missile": "Villager Missile",
+  "key.renderphoenix.special_action": "Vehicle Special Action (Roll / Water Spray)",
+  "key.renderphoenix.fire_weapon": "Vehicle Fire Weapon (Missile / Cannon)"
+}

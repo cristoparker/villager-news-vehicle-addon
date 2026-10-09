@@ -26,7 +26,7 @@ public class DaladasPlaneRenderer extends EntityRenderer<DaladasPlaneEntity, Dal
     }
 
     private final DaladasPlaneJavaModel<PlaneRenderState> model;
-    private final Identifier texture = Identifier.fromNamespaceAndPath("villagernews", "textures/entity/plane/librarian.png");
+    private final Identifier texture = Identifier.fromNamespaceAndPath("renderphoenix", "textures/entity/plane/librarian.png");
 
     public DaladasPlaneRenderer(EntityRendererProvider.Context context) {
         super(context);

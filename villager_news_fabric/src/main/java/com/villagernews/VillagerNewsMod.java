@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 public class VillagerNewsMod implements ModInitializer {
 
-    public static final String MOD_ID = "villagernews";
+    public static final String MOD_ID = "renderphoenix";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public static final CreativeModeTab VEHICLES_TAB = Registry.register(
@@ -24,7 +24,7 @@ public class VillagerNewsMod implements ModInitializer {
             Identifier.fromNamespaceAndPath(MOD_ID, "vehicles"),
             FabricCreativeModeTab.builder()
                     .icon(() -> new ItemStack(ModItems.DALADAS_ITEM))
-                    .title(Component.translatable("itemGroup.villagernews.vehicles"))
+                    .title(Component.translatable("itemGroup.renderphoenix.vehicles"))
                     .displayItems((params, output) -> {
                         output.accept(ModItems.DALADAS_ITEM);
                         output.accept(ModItems.HELICOPTER_ITEM);

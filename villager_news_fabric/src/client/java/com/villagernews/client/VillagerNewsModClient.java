@@ -32,14 +32,14 @@ public class VillagerNewsModClient implements ClientModInitializer {
 
         // Register Key Mappings
         keySpecialAction = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-                "key.villagernews.special_action",
+                "key.renderphoenix.special_action",
                 InputConstants.Type.KEYBOARD,
                 InputConstants.KEY_R,
                 KeyMapping.Category.GAMEPLAY
         ));
 
         keyFireWeapon = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-                "key.villagernews.fire_weapon",
+                "key.renderphoenix.fire_weapon",
                 InputConstants.Type.KEYBOARD,
                 InputConstants.KEY_V,
                 KeyMapping.Category.GAMEPLAY

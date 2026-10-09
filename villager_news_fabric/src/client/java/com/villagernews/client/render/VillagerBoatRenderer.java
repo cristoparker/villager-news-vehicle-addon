@@ -19,7 +19,7 @@ public class VillagerBoatRenderer extends EntityRenderer<VillagerBoatEntity, Vil
     }
 
     private final VillagerBoatJavaModel<BoatRenderState> model;
-    private final Identifier texture = Identifier.fromNamespaceAndPath("villagernews", "textures/entity/villager_helicopter/farmer.png");
+    private final Identifier texture = Identifier.fromNamespaceAndPath("renderphoenix", "textures/entity/villager_helicopter/farmer.png");
 
     public VillagerBoatRenderer(EntityRendererProvider.Context context) {
         super(context);

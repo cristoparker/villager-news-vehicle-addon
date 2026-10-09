@@ -1,5 +1,6 @@
 package com.villagernews.init;
 
+import com.villagernews.VillagerNewsMod;
 import com.villagernews.item.VehicleSpawnItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,7 +21,7 @@ public class ModItems {
     public static final Item MISSILE_ITEM = register("missile", props -> new Item(props.stacksTo(16)));
 
     private static Item register(String name, Function<Item.Properties, Item> factory) {
-        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("villagernews", name));
+        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(VillagerNewsMod.MOD_ID, name));
         Item item = factory.apply(new Item.Properties().setId(key));
         return Registry.register(BuiltInRegistries.ITEM, key, item);
     }

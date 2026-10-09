@@ -1,5 +1,6 @@
 package com.villagernews.init;
 
+import com.villagernews.VillagerNewsMod;
 import com.villagernews.entity.*;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -13,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
 public class ModEntities {
 
     public static final ResourceKey<EntityType<?>> DALADAS_KEY =
-            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("villagernews", "daladas"));
+            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(VillagerNewsMod.MOD_ID, "daladas"));
     public static final EntityType<DaladasPlaneEntity> DALADAS = Registry.register(
             BuiltInRegistries.ENTITY_TYPE,
             DALADAS_KEY,
@@ -26,7 +27,7 @@ public class ModEntities {
     );
 
     public static final ResourceKey<EntityType<?>> HELICOPTER_KEY =
-            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("villagernews", "helicopter"));
+            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(VillagerNewsMod.MOD_ID, "helicopter"));
     public static final EntityType<VillagerHelicopterEntity> HELICOPTER = Registry.register(
             BuiltInRegistries.ENTITY_TYPE,
             HELICOPTER_KEY,
@@ -39,7 +40,7 @@ public class ModEntities {
     );
 
     public static final ResourceKey<EntityType<?>> TANK_KEY =
-            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("villagernews", "tank"));
+            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(VillagerNewsMod.MOD_ID, "tank"));
     public static final EntityType<VillagerTankEntity> TANK = Registry.register(
             BuiltInRegistries.ENTITY_TYPE,
             TANK_KEY,
@@ -52,7 +53,7 @@ public class ModEntities {
     );
 
     public static final ResourceKey<EntityType<?>> BOAT_KEY =
-            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("villagernews", "boat"));
+            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(VillagerNewsMod.MOD_ID, "boat"));
     public static final EntityType<VillagerBoatEntity> BOAT = Registry.register(
             BuiltInRegistries.ENTITY_TYPE,
             BOAT_KEY,
@@ -70,7 +71,7 @@ public class ModEntities {
     );
 
     public static final ResourceKey<EntityType<?>> FIREFIGHTER_KEY =
-            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("villagernews", "firefighter"));
+            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(VillagerNewsMod.MOD_ID, "firefighter"));
     public static final EntityType<VillagerFirefighterEntity> FIREFIGHTER = Registry.register(
             BuiltInRegistries.ENTITY_TYPE,
             FIREFIGHTER_KEY,
@@ -83,7 +84,7 @@ public class ModEntities {
     );
 
     public static final ResourceKey<EntityType<?>> MISSILE_KEY =
-            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("villagernews", "missile"));
+            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(VillagerNewsMod.MOD_ID, "missile"));
     public static final EntityType<VillagerMissileEntity> MISSILE = Registry.register(
             BuiltInRegistries.ENTITY_TYPE,
             MISSILE_KEY,

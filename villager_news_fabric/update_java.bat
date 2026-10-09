@@ -42,7 +42,7 @@ if %ERRORLEVEL% neq 0 (
 
 :: Locate built jar (excluding sources jar)
 set "BUILT_JAR="
-for /f "delims=" %%F in ('dir /b /o-d "build\libs\villagernews-*.jar" 2^>nul') do (
+for /f "delims=" %%F in ('dir /b /o-d "build\libs\villager-news-vehicle-mod-*.jar" "build\libs\renderphoenix-*.jar" "build\libs\villagernews-*.jar" 2^>nul') do (
     echo %%F | findstr /i "sources" >nul
     if errorlevel 1 (
         if not defined BUILT_JAR (
@@ -53,7 +53,7 @@ for /f "delims=" %%F in ('dir /b /o-d "build\libs\villagernews-*.jar" 2^>nul') d
 )
 
 if not defined BUILT_JAR (
-    echo [ERROR] Could not find built villagernews jar in %PROJECT_DIR%\build\libs!
+    echo [ERROR] Could not find built jar in %PROJECT_DIR%\build\libs!
     popd
     pause
     exit /b 1

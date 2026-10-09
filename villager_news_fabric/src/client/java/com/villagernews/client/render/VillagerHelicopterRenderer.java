@@ -38,7 +38,7 @@ public class VillagerHelicopterRenderer extends EntityRenderer<VillagerHelicopte
     private static final float FLIGHT_TAIL_SPEED  = 90.0f;
 
     private final VillagerHelicopterJavaModel<HelicopterRenderState> model;
-    private final Identifier texture = Identifier.fromNamespaceAndPath("villagernews", "textures/entity/villager_helicopter/farmer.png");
+    private final Identifier texture = Identifier.fromNamespaceAndPath("renderphoenix", "textures/entity/villager_helicopter/farmer.png");
 
     private float accMainAngle  = 0.0f;
     private float accTailAngle  = 0.0f;

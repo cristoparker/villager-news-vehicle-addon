@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
-	"id": "villagernews",
+	"id": "renderphoenix",
 	"version": "${version}",
-	"name": "Villager News Vehicles",
+	"name": "Villager News Vehicle Mod",
 	"description": "Villager News Vehicles: Daladas Plane, Helicopter, Tank, Boat, Firefighter, and Missiles with advanced aerodynamics and flight physics!",
 	"authors": [
 		"Renderphoenix",
@@ -12,7 +12,7 @@
 		"homepage": "https://fabricmc.net/"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/villagernews/icon.png",
+	"icon": "assets/renderphoenix/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [

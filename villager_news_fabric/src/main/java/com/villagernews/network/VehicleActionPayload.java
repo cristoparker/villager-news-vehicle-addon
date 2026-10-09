@@ -13,7 +13,7 @@ public record VehicleActionPayload(int action, int param) implements CustomPacke
     public static final int ACTION_SPRAY_WATER = 3;
 
     public static final Type<VehicleActionPayload> TYPE =
-            new Type<>(Identifier.fromNamespaceAndPath("villagernews", "vehicle_action"));
+            new Type<>(Identifier.fromNamespaceAndPath("renderphoenix", "vehicle_action"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, VehicleActionPayload> CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, VehicleActionPayload::action,

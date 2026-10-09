@@ -22,7 +22,7 @@ public class VillagerFirefighterRenderer extends EntityRenderer<VillagerFirefigh
     }
 
     private final VillagerFirefighterJavaModel<FirefighterRenderState> model;
-    private final Identifier texture = Identifier.fromNamespaceAndPath("villagernews", "textures/entity/villager_helicopter/farmer.png");
+    private final Identifier texture = Identifier.fromNamespaceAndPath("renderphoenix", "textures/entity/villager_helicopter/farmer.png");
 
     /** Tracks accumulated wheel spin across frames. */
     private float accumulatedWheelAngle = 0.0f;

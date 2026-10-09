@@ -9,4 +9,4 @@ pluginManagement {
 	}
 }
 
-rootProject.name = 'villagernews'
+rootProject.name = 'villager-news-vehicle-mod'

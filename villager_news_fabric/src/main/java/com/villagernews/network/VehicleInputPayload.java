@@ -18,7 +18,7 @@ public record VehicleInputPayload(
 ) implements CustomPacketPayload {
 
     public static final Type<VehicleInputPayload> TYPE =
-            new Type<>(Identifier.fromNamespaceAndPath("villagernews", "vehicle_input"));
+            new Type<>(Identifier.fromNamespaceAndPath("renderphoenix", "vehicle_input"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, VehicleInputPayload> CODEC = StreamCodec.of(
             (buf, val) -> {

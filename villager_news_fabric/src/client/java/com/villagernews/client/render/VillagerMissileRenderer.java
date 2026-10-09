@@ -20,7 +20,7 @@ public class VillagerMissileRenderer extends EntityRenderer<VillagerMissileEntit
     }
 
     private final VillagerMissileJavaModel<MissileRenderState> model;
-    private final Identifier texture = Identifier.fromNamespaceAndPath("villagernews", "textures/entity/villager_helicopter/farmer.png");
+    private final Identifier texture = Identifier.fromNamespaceAndPath("renderphoenix", "textures/entity/villager_helicopter/farmer.png");
 
     public VillagerMissileRenderer(EntityRendererProvider.Context context) {
         super(context);
