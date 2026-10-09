@@ -6,7 +6,7 @@
       "states": {
         "grounded": {
           "on_entry": [
-            "@s renderphoenix:on_dismount"
+            "@s renderphoenix:enter_ground_mode"
           ],
           "transitions": [
             {
@@ -16,7 +16,7 @@
         },
         "flying": {
           "on_entry": [
-            "@s renderphoenix:player_mount"
+            "@s renderphoenix:enter_flight_mode"
           ],
           "transitions": [
             {

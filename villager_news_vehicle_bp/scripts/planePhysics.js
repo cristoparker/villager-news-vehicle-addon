@@ -1,149 +1,139 @@
 /**
- * Daladas Fighter Jet / Airliner - Flight Physics & Behavior System
+ * Daladas Plane - Arcade Aerodynamic Aircraft Flight Physics Controller
  *
- * Implements full 3D aerodynamic flight model calibrated to EXACTLY 2x the speed
- * of the reference Vanilla Vehicles Plane addon:
- * - Reference Flight Speed: 1.1 blocks/tick  --> Daladas Cruise: 2.2 blocks/tick (Exact 2x)
- * - Reference Taxi Speed:   0.33 blocks/tick --> Daladas Taxi:   0.66 blocks/tick (Exact 2x)
- * - Reference Acceleration: 0.007 blocks/tick² -> Daladas Accel: 0.014 blocks/tick² (Exact 2x)
- * - Precision Delta Velocity Control: Prevents impulse accumulation & lightspeed runaway!
- * - Smooth ground taxiing, throttle acceleration, and liftoff rotation
- * - Powerful 3D aerodynamic lift and propulsion (climbing, level cruise, diving)
- * - Smooth yaw turning & bank roll following player view
- * - Fail-safe input handling (direct player.inputInfo + Jump/Spacebar fallback)
- * - Clean liftoff pop impulse ensuring separation from runway
- * - Ground safety landing detection (touchdown on runway/water)
- * - Aerial barrel roll trick (left/right) with third-person camera easing
- * - Telemetry action bar HUD with authentic km/h readout
+ * Implements a stable, responsive arcade flight model:
+ * - Ground Taxi & Takeoff:
+ *   - Controlled ground throttle with W / Space (Jump)
+ *   - Steers along the runway heading
+ *   - Liftoff rotation when reaching takeoff speed and pulling up
+ * - Airborne Aerodynamics:
+ *   - Cruise speed: 1.20 blocks/tick (~86 km/h)
+ *   - Boost speed: 1.60 blocks/tick (~115 km/h) on Space / Jump
+ *   - Airbrake: 0.60 blocks/tick (~43 km/h) on S / Backward
+ *   - Dynamic lift proportional to forward speed
+ *   - Controlled gliding descent / stall when unpowered or slow
+ *   - Pitch climb & dive following pilot view
+ *   - Coordinated yaw steering and aerodynamic bank roll
+ *   - Barrel roll aerial trick on attack / punch
+ * - Touchdown Landing & Crash Safety:
+ *   - Smooth runway / water touchdown on shallow descent
+ *   - Crash landing on steep high-speed terrain impact
+ * - Clean closed-loop delta impulse tracking (no runaway velocity!)
+ * - Authentic Telemetry HUD
  */
 
 import { world, system } from "@minecraft/server";
-import { smoothValue, smoothAngle, planeAnimCorrector, calculateQuickView, mathClamp } from "./mathUtils.js";
+import { mathClamp, wrapDegrees, smoothAngle, getForwardVector, lerp } from "./mathUtils.js";
 
 export const PLANE_CONFIG = {
-    // Flight speeds (blocks/tick: 1 block/tick = 20 m/s = 72 km/h)
-    // EXACTLY 2x of reference Vanilla Vehicles plane (reference TOTAL_SPEED = 1.1)
-    TOTAL_SPEED: 2.2,                     // Exact 2x reference flight speed (158 km/h)
-    BOOST_SPEED: 2.7,                     // Throttle boost speed (Hold W + Space/Jump, 194 km/h)
-    BRAKE_SPEED: 1.1,                     // Airbrake speed (Hold S, 79 km/h - reference base speed)
+    // Airspeeds (blocks/tick: 1 block/tick = 72 km/h)
+    CRUISE_SPEED: 1.20,            // Cruise airspeed (~86 km/h)
+    BOOST_SPEED: 1.60,             // Afterburner boost speed (~115 km/h)
+    AIRBRAKE_SPEED: 0.60,          // Airbrake minimum flight speed (~43 km/h)
+    STALL_SPEED: 0.40,             // Stall threshold below which lift decays
 
-    // Ground speeds - Exact 2x of reference Vanilla Vehicles plane (reference ground = 0.33, accel = 0.007)
-    ACCELERATION: 0.014,                  // Exact 2x reference ground acceleration
-    MAX_GROUND_SPEED: 0.66,               // Exact 2x reference ground taxi speed (47 km/h)
-    ROTATION_SPEED_MIN: 0.35,             // Speed threshold for pilot rotation pull-up
+    // Acceleration & Drag
+    ACCELERATION: 0.025,           // Throttle acceleration per tick
+    DRAG_DECEL: 0.015,             // Air resistance deceleration
+    BRAKE_RATE: 0.040,             // Airbrake rate
 
-    // Aerodynamics - Direct from reference proportions
-    VERTICAL_SPEED_FACTOR: 0.60,          // Reference vertical factor (0.6 * 2.2 = 1.32 vertical speed)
-    VERTICAL_FACTOR: 0.80,                // Reference pitch drag factor
-    LIFTOFF_Y_IMPULSE: 0.32,              // Vertical liftoff pop impulse to clear runway
+    // Ground Taxi
+    MAX_TAXI_SPEED: 0.45,          // Runway taxi speed (~32 km/h)
+    TAXI_ACCEL: 0.022,             // Runway acceleration
+    TAXI_BRAKE: 0.035,             // Runway brake
+    ROTATION_SPEED_MIN: 0.28,      // Minimum speed for liftoff rotation pull-up
+    TAKEOFF_TIME_MAX: 40,          // Runway roll ticks before forced liftoff
+    LIFTOFF_Y_POP: 0.28,           // Vertical impulse pop clearing runway
 
-    // Timings - Direct from reference
-    TAKEOFF_TIME: 40,                     // Runway taxi time in ticks (2.0s, matches reference)
-    DISABLE_FLIGHT_COOLDOWN: 25,          // Ground immunity buffer after takeoff (1.25s, matches reference)
-    TRICK_COOLDOWN: 30,                   // Cooldown between barrel rolls (1.5s, matches reference)
+    // Aerodynamics
+    MAX_CLIMB_SPEED: 0.60,         // Vertical climb speed
+    MAX_DIVE_SPEED: -0.80,         // Vertical dive speed
+    GRAVITY: 0.04,                 // Gravity pull when stalling / unpowered
+    PITCH_MAX: 60.0,               // Maximum climb/dive pitch angle in degrees
+    BANK_MAX: 45.0,                // Maximum wing bank angle in degrees
 
-    // Smoothing filters - Direct from reference
-    SMOOTHING_H: 30,                      // Reference horizontal look smoothing (SMOOTHING_FACTOR_HORIZONTAL)
-    SMOOTHING_H_QUICK: 15,                // Reference steering responsiveness (SMOOTHING_FACTOR_HORIZONTAL_QUICKER)
-    SMOOTHING_V_ON: 50,                   // Reference vertical smoothing when steep
-    SMOOTHING_V_OFF: 20,                  // Reference vertical smoothing default
-    SMOOTHING_V_TAIL: 25                  // Reference tail-off timer
+    // Steering
+    YAW_TURN_RATE: 2.8,            // Turn rate in degrees/tick
+    TRICK_COOLDOWN: 30             // Cooldown between barrel rolls (ticks)
 };
 
 export class PlaneBehavior {
     constructor(vehicle, player) {
         this.vehicle = vehicle;
         this.player = player;
-        this.removed = false;
-
-        this.state = "stationary";
-        this.speed = 0;
-        this.takeoffTime = PLANE_CONFIG.TAKEOFF_TIME;
-        this.disableFlightCooldown = 0;
+        this.state = "stationary"; // "stationary", "takeoff", "flying", "crashing"
+        this.airspeed = 0;
+        this.takeoffTicks = PLANE_CONFIG.TAKEOFF_TIME_MAX;
+        this.flightImmunityTicks = 0;
         this.trickCooldown = 0;
+        this.barrelRollTicks = 0;
+        this.barrelRollDir = 1; // 1 = right, -1 = left
         this.tickCounter = 0;
         this.trick = "ready";
 
-        this.velocity = { x: 0, y: 0, z: 0 };
-        this.horizontalSpeed = 0;
-        this.viewDir = { x: 0, y: 0, z: 1 };
-        this.playerRot = { x: 0, y: 0 };
-        this.vehicleRot = { x: 0, y: 0 };
-        this.targetVerticalSpeed = 0;
-        this.navigation = null;
-
-        this.controls = {
-            forward: false,
-            backward: false,
-            left: false,
-            right: false
-        };
-
-        this.smoothV = PLANE_CONFIG.SMOOTHING_V_OFF;
-        this.smoothVTimeout = null;
-        this.wasConditionMet = false;
-        this.cameraClearTimeout = null;
-        this.trickIntervalId = null;
-
-        this.hist = {
-            quickX: [],
-            quickZ: [],
-            quickDeg: [],
-            xView: [],
-            yView: [],
-            yViewAnim: [],
-            zView: []
-        };
-
-        this.smooth_x = 0;
-        this.smooth_z = 0;
-        this.smooth_y = 0;
-        this.smooth_y_anim = 0;
-        this.quick_x = 0;
-        this.quick_z = 0;
-        this.quick_deg = 0;
+        this.headingYaw = vehicle.getRotation()?.y || 0;
+        this.currentPitch = 0;
+        this.bankRoll = 0;
+        this.removed = false;
+        this.yawHistory = [];
     }
 
     setPlayer(player) {
         this.player = player;
     }
 
-    clearPlayer() {
-        this.player = null;
-    }
-
-    getRider() {
-        if (!this.vehicle || !this.vehicle.isValid) return null;
-        const rideable = this.vehicle.getComponent("minecraft:rideable");
-        return rideable?.getRiders()?.find(r => r.typeId === "minecraft:player") || null;
-    }
-
     update() {
-        if (this.removed || !this.vehicle || !this.vehicle.isValid) {
-            this.cleanup();
-            return;
-        }
+        if (this.removed || !this.vehicle || !this.vehicle.isValid) return;
 
         this.tickCounter++;
         this.trickCooldown = Math.max(0, this.trickCooldown - 1);
 
-        const rider = this.getRider();
-        if (!rider || !this.player || !this.player.isValid) {
+        const hasDriver = this.player && this.player.isValid;
+        const curVel = this.vehicle.getVelocity() || { x: 0, y: 0, z: 0 };
+        const isOnGround = this.vehicle.isOnGround || false;
+        const isInWater = this.vehicle.isInWater || false;
+
+        if (!hasDriver) {
             if (this.state === "flying" || this.state === "takeoff") {
                 this._enterStationary();
             }
             return;
         }
 
-        // 1. Gather player and entity physics data
-        try { this.velocity = this.vehicle.getVelocity(); } catch (e) {}
-        this.horizontalSpeed = Math.hypot(this.velocity.x, this.velocity.z);
+        // 1. Gather pilot inputs
+        let isJumping = false;
+        let viewDir = { x: 0, y: 0, z: 1 };
+        let playerRot = { x: 0, y: this.headingYaw };
+        let inputVec = { x: 0, y: 0 };
 
-        try { this.viewDir = this.player.getViewDirection(); } catch (e) {}
-        try { this.playerRot = this.player.getRotation(); } catch (e) {}
-        try { this.vehicleRot = this.vehicle.getRotation(); } catch (e) {}
+        try {
+            isJumping = this.player.isJumping || false;
+            viewDir = this.player.getViewDirection();
+            playerRot = this.player.getRotation();
 
-        // 2. Read trick property (triggered by damage_sensor / punch)
+            if (this.player.inputInfo) {
+                const vec = this.player.inputInfo.getMovementVector();
+                if (vec) inputVec = vec;
+            }
+        } catch (e) {}
+
+        const forwardInput = (inputVec.y > 0.1) || isJumping;
+        const backwardInput = inputVec.y < -0.1;
+        const leftInput = inputVec.x > 0.1;
+        const rightInput = inputVec.x < -0.1;
+
+        // Sync WASD enum property for animations
+        let wasd = "none";
+        if (forwardInput) wasd = "w";
+        else if (backwardInput) wasd = "s";
+        else if (rightInput) wasd = "d";
+        else if (leftInput) wasd = "a";
+
+        try {
+            this.vehicle.setProperty("renderphoenix:wasd", wasd);
+        } catch (e) {}
+
+        // Read trick property (triggered by punch/damage_sensor)
         let currentTrick = "ready";
         try {
             currentTrick = this.vehicle.getProperty("renderphoenix:trick") || "ready";
@@ -151,288 +141,196 @@ export class PlaneBehavior {
 
         if (currentTrick === "active" && this.trick !== "active") {
             this.trick = currentTrick;
-            this._performTrick();
+            this._startBarrelRoll();
         } else {
             this.trick = currentTrick;
         }
 
-        // 3. Process inputs
-        this._updateControls();
-
-        // 4. Calculate turn direction for barrel roll trick
-        let yawChange = ((this.vehicleRot.y - this.playerRot.y) + 360) % 360;
-        if (yawChange > 180) yawChange -= 360;
-        this.navigation = yawChange > 1 ? "left" : yawChange < -1 ? "right" : null;
-
-        // 5. Smoothing factor updates (direct from reference)
-        this._updateSmoothingFactor();
-        this._calcSmooth();
-
-        // 6. State machine logic
+        // 2. State Machine
         switch (this.state) {
             case "stationary":
-                this._handleStationary();
+                this._handleStationary(forwardInput, curVel);
                 break;
             case "takeoff":
-                this._handleTakeoff();
+                this._handleTakeoff(forwardInput, isJumping, playerRot, curVel);
                 break;
             case "flying":
-                this._handleFlying();
+                this._handleFlying(forwardInput, backwardInput, isJumping, playerRot, viewDir, isOnGround, isInWater, curVel);
                 break;
             case "crashing":
-                this._handleCrashing();
+                this._handleCrashing(isOnGround, isInWater);
                 break;
         }
 
-        // 7. Trim history buffers
-        for (const arr of Object.values(this.hist)) {
-            if (arr.length > 100) arr.splice(0, arr.length - 100);
-        }
-
-        // 8. Flight Telemetry HUD
+        // 3. Update HUD
         this._updateActionBar();
     }
 
-    _updateControls() {
-        if (!this.player || !this.player.isValid) {
-            this.controls = { forward: false, backward: false, left: false, right: false };
-            return;
-        }
-
-        let inputVec = null;
-        try {
-            if (this.player.inputInfo) {
-                inputVec = this.player.inputInfo.getMovementVector();
-            }
-        } catch (e) {}
-
-        const isJumping = this.player.isJumping || false;
-
-        if (inputVec && (Math.abs(inputVec.x) > 0.05 || Math.abs(inputVec.y) > 0.05)) {
-            this.controls.forward = inputVec.y > 0.1 || isJumping;
-            this.controls.backward = inputVec.y < -0.1;
-            this.controls.left = inputVec.x < -0.1;
-            this.controls.right = inputVec.x > 0.1;
-        } else {
-            // Robust fallback if inputInfo is unavailable on player client
-            if (this.state === "flying") {
-                // Plane cruises forward automatically in flight
-                this.controls.forward = true;
-                this.controls.backward = false;
-                this.controls.left = false;
-                this.controls.right = false;
-            } else {
-                // On ground: Spacebar / Jump throttles forward taxi
-                this.controls.forward = isJumping || (this.speed > 0.05);
-                this.controls.backward = false;
-                this.controls.left = false;
-                this.controls.right = false;
-            }
-        }
-
-        // Sync WASD enum property for client-side anims
-        let wasd = "none";
-        if (this.controls.forward) wasd = "w";
-        else if (this.controls.backward) wasd = "s";
-        else if (this.controls.right) wasd = "d";
-        else if (this.controls.left) wasd = "a";
-
-        try {
-            if (this.vehicle.getProperty("renderphoenix:wasd") !== wasd) {
-                this.vehicle.setProperty("renderphoenix:wasd", wasd);
-            }
-        } catch (e) {}
-    }
-
-    _updateSmoothingFactor() {
-        const condMet = this.disableFlightCooldown <= 0 && (this.viewDir.y < -0.8 || this.viewDir.y > 0.9);
-
-        if (!condMet && this.wasConditionMet && this.smoothVTimeout === null) {
-            this.smoothVTimeout = PLANE_CONFIG.SMOOTHING_V_TAIL;
-        }
-
-        if (this.smoothVTimeout !== null) {
-            this.smoothVTimeout--;
-            if (this.smoothVTimeout <= 0) {
-                this.smoothV = condMet ? PLANE_CONFIG.SMOOTHING_V_ON : PLANE_CONFIG.SMOOTHING_V_OFF;
-                this.smoothVTimeout = null;
-            }
-        } else if (condMet) {
-            this.smoothV = PLANE_CONFIG.SMOOTHING_V_ON;
-        }
-
-        this.wasConditionMet = condMet;
-    }
-
-    _calcSmooth() {
-        const quickerDir = this.state === "takeoff" ? this.playerRot.y : this.vehicleRot.y;
-        const qv = calculateQuickView(quickerDir);
-
-        // When grounded/stationary, dampen pitch so model doesn't clip into the ground
-        // BUT when flying, use active view direction immediately for climbing/diving!
-        const onGroundStationary = (this.state === "stationary" || this.state === "takeoff") &&
-            (this.vehicle.isOnGround || this.vehicle.isInWater);
-
-        const cvAnim = onGroundStationary ? 0.05 : planeAnimCorrector(this.viewDir.y);
-        const cv = onGroundStationary ? 0.05 : this.viewDir.y;
-
-        this.smooth_y = smoothValue(cv, this.hist.yView, this.smoothV);
-        this.smooth_y_anim = smoothValue(cvAnim, this.hist.yViewAnim, this.smoothV);
-        this.smooth_x = smoothValue(this.viewDir.x, this.hist.xView, PLANE_CONFIG.SMOOTHING_H);
-        this.smooth_z = smoothValue(this.viewDir.z, this.hist.zView, PLANE_CONFIG.SMOOTHING_H);
-        this.quick_x = smoothValue(qv.x, this.hist.quickX, PLANE_CONFIG.SMOOTHING_H_QUICK);
-        this.quick_z = smoothValue(qv.z, this.hist.quickZ, PLANE_CONFIG.SMOOTHING_H_QUICK);
-        this.quick_deg = smoothAngle(quickerDir, this.hist.quickDeg, PLANE_CONFIG.SMOOTHING_H_QUICK);
-
-        try {
-            this.vehicle.setProperty("renderphoenix:plane_angle", -this.smooth_y * 80);
-        } catch (e) {}
-    }
-
-    _handleStationary() {
-        if (this.controls.forward) {
+    _handleStationary(forwardInput, curVel) {
+        if (forwardInput) {
             this._enterTakeoff();
         } else {
-            // Controlled ground braking to complete stop
-            this.speed = Math.max(0, this.speed - 0.03);
-            const curVx = this.velocity?.x || 0;
-            const curVz = this.velocity?.z || 0;
+            this.airspeed = Math.max(0, this.airspeed - PLANE_CONFIG.TAXI_BRAKE);
+            this.currentPitch = lerp(this.currentPitch, 0, 0.2);
+            this.bankRoll = lerp(this.bankRoll, 0, 0.2);
 
-            if (Math.hypot(curVx, curVz) > 0.02) {
+            if (Math.abs(curVel.x) > 0.02 || Math.abs(curVel.z) > 0.02) {
                 try {
                     this.vehicle.applyImpulse({
-                        x: -curVx * 0.35,
+                        x: -curVel.x * 0.4,
                         y: 0,
-                        z: -curVz * 0.35
+                        z: -curVel.z * 0.4
                     });
                 } catch (e) {}
             }
             try {
-                this.vehicle.setRotation({ x: 0, y: this.quick_deg });
+                this.vehicle.setRotation({ x: 0, y: this.headingYaw });
             } catch (e) {}
         }
     }
 
-    _handleTakeoff() {
-        if (this.controls.forward) {
-            // Accelerate along runway up to MAX_GROUND_SPEED (0.66 blocks/tick = 2x reference)
-            this.speed = Math.min(this.speed + PLANE_CONFIG.ACCELERATION, PLANE_CONFIG.MAX_GROUND_SPEED);
+    _handleTakeoff(forwardInput, isJumping, playerRot, curVel) {
+        if (forwardInput) {
+            // Accelerate along runway
+            this.airspeed = Math.min(this.airspeed + PLANE_CONFIG.TAXI_ACCEL, PLANE_CONFIG.MAX_TAXI_SPEED);
 
-            const targetVx = this.quick_x * this.speed;
-            const targetVz = this.quick_z * this.speed;
-            const curVx = this.velocity?.x || 0;
-            const curVz = this.velocity?.z || 0;
+            // Ground steering follows pilot look
+            const yawDiff = wrapDegrees(playerRot.y - this.headingYaw);
+            this.headingYaw += mathClamp(yawDiff * 0.14, -PLANE_CONFIG.YAW_TURN_RATE, PLANE_CONFIG.YAW_TURN_RATE);
+            this.headingYaw = wrapDegrees(this.headingYaw);
 
-            // Precision velocity tracking: prevents runaway ground speed
-            const groundImpulseX = (targetVx - curVx) * 0.40 + (targetVx * 0.04);
-            const groundImpulseZ = (targetVz - curVz) * 0.40 + (targetVz * 0.04);
+            const f = getForwardVector(this.headingYaw);
+            const targetVx = f.x * this.airspeed;
+            const targetVz = f.z * this.airspeed;
 
             try {
                 this.vehicle.applyImpulse({
-                    x: groundImpulseX,
+                    x: (targetVx - curVel.x) * 0.8,
                     y: 0,
-                    z: groundImpulseZ
+                    z: (targetVz - curVel.z) * 0.8
                 });
+                this.vehicle.setRotation({ x: 0, y: this.headingYaw });
             } catch (e) {}
 
-            try {
-                this.vehicle.setRotation({ x: 0, y: this.quick_deg });
-            } catch (e) {}
+            this.takeoffTicks--;
 
-            this.takeoffTime--;
+            // Liftoff condition: pilot pulls up (pitch < -4° looking up or holding Space) at rotation speed
+            // OR runway taxi time completes
+            const pullingUp = playerRot.x < -4.0 || isJumping;
+            const canRotate = this.airspeed >= PLANE_CONFIG.ROTATION_SPEED_MIN && pullingUp;
 
-            // Liftoff condition: runway roll completed (40 ticks) OR pilot pulls up at rotation speed
-            const isPullingUp = this.viewDir.y > 0.12 || (this.player && this.player.isJumping);
-            const canRotate = this.speed >= PLANE_CONFIG.ROTATION_SPEED_MIN && isPullingUp;
-
-            if (this.takeoffTime <= 0 || canRotate) {
+            if (this.takeoffTicks <= 0 || canRotate) {
                 this._enterFlight();
             }
         } else {
-            // Forward input released - abort takeoff
             this._enterStationary();
         }
     }
 
-    _handleFlying() {
-        if (this.disableFlightCooldown > 0) {
-            this.disableFlightCooldown--;
+    _handleFlying(forwardInput, backwardInput, isJumping, playerRot, viewDir, isOnGround, isInWater, curVel) {
+        if (this.flightImmunityTicks > 0) {
+            this.flightImmunityTicks--;
         }
 
-        // Landing & surface detection (only active after takeoff immunity window)
-        if (this.disableFlightCooldown <= 0) {
-            const touchingSurface = this.vehicle.isOnGround || this.vehicle.isInWater;
-            if (touchingSurface) {
-                const isSteepDive = this.viewDir.y < -0.45 && this.horizontalSpeed > 0.65;
-                if (isSteepDive) {
-                    this._enterCrash();
-                    return;
-                } else if (this.viewDir.y <= 0.15) {
-                    // Smooth touchdown on runway or water
-                    this._enterStationary();
-                    return;
-                }
+        // Landing & surface collision detection (after takeoff immunity window)
+        if (this.flightImmunityTicks <= 0 && (isOnGround || isInWater)) {
+            const isSteepDive = this.currentPitch > 25.0 && this.airspeed > 0.65;
+            if (isSteepDive) {
+                this._enterCrash();
+                return;
+            } else if (this.currentPitch < 15.0) {
+                // Smooth touchdown on runway or water
+                this._enterStationary();
+                return;
             }
         }
 
-        // Target flight speed: EXACTLY 2.2 blocks/tick (2x reference 1.1)
-        let targetSpeed = PLANE_CONFIG.TOTAL_SPEED;
-        if (this.controls.forward && this.player && this.player.isJumping) {
-            targetSpeed = PLANE_CONFIG.BOOST_SPEED; // 2.7
-        } else if (this.controls.backward) {
-            targetSpeed = PLANE_CONFIG.BRAKE_SPEED; // 1.1 (reference base speed)
+        // 1. Airspeed Throttle Management
+        let targetAirspeed = PLANE_CONFIG.CRUISE_SPEED;
+        if (isJumping) {
+            targetAirspeed = PLANE_CONFIG.BOOST_SPEED;
+        } else if (backwardInput) {
+            targetAirspeed = PLANE_CONFIG.AIRBRAKE_SPEED;
+        } else if (!forwardInput) {
+            // Slight cruise drag when neutral
+            targetAirspeed = PLANE_CONFIG.CRUISE_SPEED * 0.90;
         }
 
-        // Pitch aerodynamic drag factor (matches reference)
-        const pitchFactor = Math.abs(this.smooth_y) * PLANE_CONFIG.VERTICAL_FACTOR;
-        const forwardThrust = targetSpeed * (1 - pitchFactor * 0.40);
-        this.targetVerticalSpeed = targetSpeed * this.smooth_y * PLANE_CONFIG.VERTICAL_SPEED_FACTOR;
+        if (this.airspeed < targetAirspeed) {
+            this.airspeed = Math.min(this.airspeed + PLANE_CONFIG.ACCELERATION, targetAirspeed);
+        } else if (this.airspeed > targetAirspeed) {
+            this.airspeed = Math.max(this.airspeed - PLANE_CONFIG.DRAG_DECEL, targetAirspeed);
+        }
 
-        // Visual Rotation: Smooth 3D Bank, Pitch, and Yaw
-        const yaw = Math.atan2(this.smooth_x, this.smooth_z) * (180 / Math.PI);
-        const isExtreme = Math.abs(this.smooth_y_anim) > 1;
-        const pitch = isExtreme
-            ? (this.smooth_y_anim > 1 ? -90 : 90)
-            : -Math.asin(Math.max(-1, Math.min(1, this.smooth_y_anim))) * (180 / Math.PI);
+        // 2. Pitch Control (Climbing and Diving)
+        // In Minecraft: negative pitch is UP (climbing), positive is DOWN (diving)
+        const targetPitch = mathClamp(playerRot.x * 0.85, -PLANE_CONFIG.PITCH_MAX, PLANE_CONFIG.PITCH_MAX);
+        this.currentPitch = lerp(this.currentPitch, targetPitch, 0.16);
+
+        // 3. Yaw Steering & Heading
+        const yawDiff = wrapDegrees(playerRot.y - this.headingYaw);
+        this.headingYaw += mathClamp(yawDiff * 0.15, -PLANE_CONFIG.YAW_TURN_RATE, PLANE_CONFIG.YAW_TURN_RATE);
+        this.headingYaw = wrapDegrees(this.headingYaw);
+
+        // 4. Aerodynamic Bank Angle (Roll)
+        if (this.barrelRollTicks > 0) {
+            this.barrelRollTicks--;
+            const progress = 1.0 - (this.barrelRollTicks / 16.0);
+            this.bankRoll = this.barrelRollDir * progress * 360.0;
+        } else {
+            // Wings bank into turns
+            const targetRoll = mathClamp(-yawDiff * 1.5, -PLANE_CONFIG.BANK_MAX, PLANE_CONFIG.BANK_MAX);
+            this.bankRoll = lerp(this.bankRoll, targetRoll, 0.15);
+        }
+
+        // 5. Dynamic Aerodynamic Lift & Vertical Rate
+        // Vertical speed from pitch angle: climbing (pitch < 0) gives +Y, diving (pitch > 0) gives -Y
+        const pitchRad = this.currentPitch * (Math.PI / 180);
+        let verticalRate = -Math.sin(pitchRad) * this.airspeed;
+        verticalRate = mathClamp(verticalRate, PLANE_CONFIG.MAX_DIVE_SPEED, PLANE_CONFIG.MAX_CLIMB_SPEED);
+
+        // Lift vs Gravity: at full cruise speed, lift counters gravity completely.
+        // Below stall speed, lift decays and gravity causes controlled gliding descent.
+        const speedRatio = Math.min(1.0, this.airspeed / PLANE_CONFIG.CRUISE_SPEED);
+        const lift = speedRatio * PLANE_CONFIG.GRAVITY;
+        const gravityFall = (1.0 - speedRatio) * PLANE_CONFIG.GRAVITY;
+        const netVy = verticalRate + lift - gravityFall;
+
+        // Horizontal forward thrust accounting for pitch angle
+        const forwardThrust = this.airspeed * Math.cos(pitchRad);
+        const f = getForwardVector(this.headingYaw);
+
+        let targetVx = f.x * forwardThrust;
+        let targetVz = f.z * forwardThrust;
+
+        // Lateral boost during barrel roll trick
+        if (this.barrelRollTicks > 0) {
+            const r = { x: -f.z, z: f.x };
+            targetVx += r.x * this.barrelRollDir * 0.35;
+            targetVz += r.z * this.barrelRollDir * 0.35;
+        }
+
+        // 6. Closed-Loop Delta Velocity Impulse
+        const impulseX = (targetVx - curVel.x) * 0.85;
+        const impulseY = (netVy - curVel.y) * 0.85;
+        const impulseZ = (targetVz - curVel.z) * 0.85;
 
         try {
-            this.vehicle.setRotation({ x: pitch * 1.10, y: -yaw });
-        } catch (e) {}
-
-        // Target 3D flight velocity vector
-        const targetVx = this.smooth_x * forwardThrust;
-        const targetVy = this.targetVerticalSpeed;
-        const targetVz = this.smooth_z * forwardThrust;
-
-        // Precision Delta Velocity Control:
-        // Calculates the exact impulse needed to reach and hold target velocity without runaway accumulation!
-        const curVx = this.velocity?.x || 0;
-        const curVy = this.velocity?.y || 0;
-        const curVz = this.velocity?.z || 0;
-
-        const impulseX = (targetVx - curVx) * 0.35 + (targetVx * 0.02);
-        const impulseY = (targetVy - curVy) * 0.35 + (targetVy * 0.02);
-        const impulseZ = (targetVz - curVz) * 0.35 + (targetVz * 0.02);
-
-        try {
-            this.vehicle.applyImpulse({
-                x: impulseX,
-                y: impulseY,
-                z: impulseZ
-            });
+            this.vehicle.applyImpulse({ x: impulseX, y: impulseY, z: impulseZ });
+            this.vehicle.setRotation({ x: this.currentPitch, y: this.headingYaw });
         } catch (e) {}
     }
 
-    _handleCrashing() {
-        if (this.vehicle.isOnGround || this.vehicle.isInWater) {
+    _handleCrashing(isOnGround, isInWater) {
+        if (isOnGround || isInWater) {
             this._enterStationary();
         }
     }
 
     _enterTakeoff() {
         this.state = "takeoff";
-        this.speed = 0.05;
-        this.takeoffTime = PLANE_CONFIG.TAKEOFF_TIME;
+        this.airspeed = 0.08;
+        this.takeoffTicks = PLANE_CONFIG.TAKEOFF_TIME_MAX;
         try {
             this.vehicle.setProperty("renderphoenix:plane_state", "takeoff");
             this.vehicle.triggerEvent("renderphoenix:enter_ground_mode");
@@ -441,30 +339,27 @@ export class PlaneBehavior {
 
     _enterFlight() {
         this.state = "flying";
-        this.disableFlightCooldown = PLANE_CONFIG.DISABLE_FLIGHT_COOLDOWN;
+        this.flightImmunityTicks = 30; // 1.5 seconds immunity to clear runway
+        this.airspeed = Math.max(this.airspeed, PLANE_CONFIG.CRUISE_SPEED * 0.8);
+
         try {
             this.vehicle.setProperty("renderphoenix:plane_state", "flying");
             this.vehicle.triggerEvent("renderphoenix:enter_flight_mode");
         } catch (e) {}
 
-        // Clean vertical liftoff pop impulse to clear ground collision
-        const qv = calculateQuickView(this.vehicleRot.y);
+        // Gentle vertical pop impulse clearing ground collision
         try {
-            this.vehicle.applyImpulse({
-                x: qv.x * 0.30,
-                y: PLANE_CONFIG.LIFTOFF_Y_IMPULSE,
-                z: qv.z * 0.30
-            });
-        } catch (e) {}
-
-        try {
-            this.vehicle.dimension.playSound("random.fuse", this.vehicle.location, { volume: 0.7, pitch: 1.6 });
+            this.vehicle.applyImpulse({ x: 0, y: PLANE_CONFIG.LIFTOFF_Y_POP, z: 0 });
+            this.vehicle.dimension.playSound("random.fuse", this.vehicle.location, { volume: 0.8, pitch: 1.4 });
         } catch (e) {}
     }
 
     _enterStationary() {
         this.state = "stationary";
-        this.speed = 0;
+        this.airspeed = 0;
+        this.currentPitch = 0;
+        this.bankRoll = 0;
+
         try {
             this.vehicle.setProperty("renderphoenix:plane_state", "stationary");
             this.vehicle.triggerEvent("renderphoenix:enter_ground_mode");
@@ -476,94 +371,59 @@ export class PlaneBehavior {
         try {
             this.vehicle.setProperty("renderphoenix:plane_state", "crashing");
             this.vehicle.triggerEvent("renderphoenix:enter_ground_mode");
-            this.vehicle.dimension.createExplosion(this.vehicle.location, 1.2, {
+            this.vehicle.dimension.createExplosion(this.vehicle.location, 1.0, {
                 breaksBlocks: false,
                 causesFire: false
             });
         } catch (e) {}
     }
 
-    _performTrick() {
-        if (this.trickCooldown > 0 || !this.player || !this.player.isValid) return;
+    _startBarrelRoll() {
+        if (this.trickCooldown > 0 || !this.player || !this.player.isValid || this.state !== "flying") return;
 
-        const dir = this.navigation || "right";
-        const anims = {
-            right: "animation.renderphoenix.plane_trick_right",
-            left: "animation.renderphoenix.plane_trick_left"
-        };
+        this.barrelRollTicks = 16;
+        // Determine roll direction based on yaw turn
+        const yawDiff = wrapDegrees(this.player.getRotation().y - this.headingYaw);
+        this.barrelRollDir = yawDiff < 0 ? -1 : 1;
 
-        try { this.vehicle.setProperty("renderphoenix:trick", "cooldown"); } catch (e) {}
-        try { this.vehicle.playAnimation(anims[dir]); } catch (e) {}
-
-        if (this.cameraClearTimeout !== null) {
-            system.clearRun(this.cameraClearTimeout);
-            this.cameraClearTimeout = null;
-        }
+        const anim = this.barrelRollDir === 1
+            ? "animation.renderphoenix.plane_trick_right"
+            : "animation.renderphoenix.plane_trick_left";
 
         try {
-            this.player.camera.setCamera("minecraft:third_person", {
-                easeOptions: { easeType: "InOutSine", easeTime: 0.8 }
-            });
+            this.vehicle.setProperty("renderphoenix:trick", "cooldown");
+            this.vehicle.playAnimation(anim);
         } catch (e) {}
-
-        // Lateral barrel roll impulse burst
-        const vf = 0.40;
-        const kx = dir === "right" ? -this.smooth_z * vf : this.smooth_z * vf;
-        const kz = dir === "right" ? this.smooth_x * vf : -this.smooth_x * vf;
-        let ticks = 0;
-
-        if (this.trickIntervalId !== null) {
-            system.clearRun(this.trickIntervalId);
-        }
-
-        this.trickIntervalId = system.runInterval(() => {
-            if (ticks++ >= 14 || this.removed || !this.vehicle?.isValid ||
-                this.vehicle.isOnGround || !this.getRider() || this.state !== "flying") {
-                if (this.trickIntervalId !== null) {
-                    system.clearRun(this.trickIntervalId);
-                    this.trickIntervalId = null;
-                }
-                return;
-            }
-            try { this.vehicle.applyImpulse({ x: kx, y: 0.04, z: kz }); } catch (e) {}
-        }, 1);
 
         this.trickCooldown = PLANE_CONFIG.TRICK_COOLDOWN;
 
         system.runTimeout(() => {
             if (!this.removed && this.vehicle?.isValid) {
-                try { this.vehicle.setProperty("renderphoenix:trick", "ready"); } catch (e) {}
+                try {
+                    this.vehicle.setProperty("renderphoenix:trick", "ready");
+                } catch (e) {}
             }
-        }, 25);
-
-        this.cameraClearTimeout = system.runTimeout(() => {
-            if (this.player?.isValid && !this.removed) {
-                try { this.player.camera.clear(); } catch (e) {}
-            }
-            this.cameraClearTimeout = null;
-        }, 40);
+        }, PLANE_CONFIG.TRICK_COOLDOWN);
     }
 
     _updateActionBar() {
         if (!this.player || !this.player.isValid) return;
 
         try {
+            const kmh = Math.round(this.airspeed * 72);
             if (this.state === "takeoff") {
-                const kmh = Math.round(this.speed * 72);
-                const secsRemaining = Math.max(0, (this.takeoffTime / 20).toFixed(1));
                 this.player.onScreenDisplay.setActionBar(
-                    `§6✈ Daladas Taxiing... §f| §eSpeed: §f${kmh} km/h §f| §aLiftoff in §f${secsRemaining}s §7(Hold W or Space)`
+                    `§6✈ Daladas Taxiing §f| §eSpeed: §f${kmh} km/h §f| §aPull up or Space to Lift Off!`
                 );
             } else if (this.state === "flying") {
-                const kmh = Math.round(this.horizontalSpeed * 72);
                 const alt = Math.round(this.vehicle.location.y);
-                const trickStatus = this.trick === "ready" ? "§aREADY" : "§7CD";
+                const rollStatus = this.trick === "ready" ? "§aREADY" : "§7CD";
                 this.player.onScreenDisplay.setActionBar(
-                    `§b✈ Daladas Airborne §f| §7Alt: §f${alt}m §f| §7Spd: §f${kmh} km/h §f| §6Roll: ${trickStatus} §7(Punch)`
+                    `§b✈ Daladas Airborne §f| §7Spd: §f${kmh} km/h §f| §7Alt: §f${alt}m §f| §6Roll: ${rollStatus} §7(Punch)`
                 );
             } else if (this.state === "stationary") {
                 this.player.onScreenDisplay.setActionBar(
-                    "§7✈ Daladas Grounded §f| §aHold W or Space to Take Off!"
+                    "§7✈ Daladas Grounded §f| §aHold W or Space to Taxi & Take Off"
                 );
             }
         } catch (e) {}
@@ -571,66 +431,9 @@ export class PlaneBehavior {
 
     cleanup() {
         this.removed = true;
-        if (this.cameraClearTimeout !== null) {
-            system.clearRun(this.cameraClearTimeout);
-            this.cameraClearTimeout = null;
-        }
-        if (this.trickIntervalId !== null) {
-            system.clearRun(this.trickIntervalId);
-            this.trickIntervalId = null;
-        }
-        try { this.player?.camera?.clear(); } catch (e) {}
-        try { this.player?.onScreenDisplay?.setActionBar(""); } catch (e) {}
+        this._enterStationary();
+        try {
+            this.player?.onScreenDisplay?.setActionBar("");
+        } catch (e) {}
     }
-}
-
-// ---------- Session Registry ----------
-
-const sessions = new Map();
-
-export function tickPlanePhysics() {
-    // Cleanup invalid or dead sessions
-    for (const [id, b] of sessions.entries()) {
-        if (!b.vehicle || !b.vehicle.isValid || b.removed) {
-            b.cleanup();
-            sessions.delete(id);
-        }
-    }
-
-    // Register active planes with player riders
-    for (const player of world.getPlayers()) {
-        const vehicle = _getRidingPlane(player);
-        if (!vehicle) continue;
-        let b = sessions.get(vehicle.id);
-        if (!b) {
-            b = new PlaneBehavior(vehicle, player);
-            sessions.set(vehicle.id, b);
-        } else {
-            b.setPlayer(player);
-        }
-    }
-
-    // Update active behaviors
-    for (const [, b] of sessions.entries()) {
-        try { b.update(); } catch (e) {}
-    }
-}
-
-export function getPlaneBehavior(vehicleId) {
-    return sessions.get(vehicleId) || null;
-}
-
-function _getRidingPlane(player) {
-    try {
-        const nearby = player.dimension.getEntities({
-            location: player.location,
-            maxDistance: 12,
-            type: "renderphoenix:plane"
-        });
-        for (const v of nearby) {
-            const r = v.getComponent("minecraft:rideable");
-            if (r?.getRiders().some(x => x.id === player.id)) return v;
-        }
-    } catch (e) {}
-    return null;
 }

@@ -1,41 +1,42 @@
 /**
- * Villager News Helicopter - Advanced 6-DOF Flight Physics
+ * Villager News Helicopter - Advanced 6-DOF Flight Physics Controller
  *
- * Features:
- * - Proper vertical collective control:
- *   - Hold Space / Jump to ascend smoothly
- *   - Look down sharply to descend smoothly
- *   - Stable aerodynamic hover with micro-bobbing when neutral
- * - Full cyclic horizontal control (WASD):
- *   - Forward (W): Leans nose down (-20° pitch) and propels forward
- *   - Backward (S): Leans nose up (+16° pitch) and reverses
- *   - Strafe (A/D): Banks left/right (±16° roll) and strafes sideways
- *   - Smooth yaw rotation matching player view heading
- * - Real momentum, aerodynamic drag, and inertia
- * - Safe runway / helipad landing and touchdown
- * - Auto-dismount ground safety
+ * Controls:
+ * - Collective (Altitude):
+ *   - Space / Jump key: Ascend smoothly
+ *   - Look down sharply (< -30°): Descend smoothly
+ *   - Neutral: Stable hover with gentle aerodynamic micro-bobbing
+ * - Cyclic (Horizontal):
+ *   - Forward (W): Leans nose down (-16° pitch) and moves forward
+ *   - Backward (S): Leans nose up (+12° pitch) and reverses
+ *   - Strafe Left/Right (A/D): Banks left/right (±14° roll) and moves sideways
+ *   - Yaw: Turns smoothly to follow pilot view heading
+ * - Ground & Landing:
+ *   - Starts grounded with rotors idling.
+ *   - Lifts off when holding Space (Jump) or Forward (W).
+ *   - Lands softly on terrain or helipad when settling with low descent rate.
  */
 
 import { world, system } from "@minecraft/server";
-import { smoothAngle, mathClamp } from "./mathUtils.js";
+import { mathClamp, wrapDegrees, smoothAngle, getForwardVector, getRightVector, lerp } from "./mathUtils.js";
 
 export const HELICOPTER_CONFIG = {
-    MAX_HORIZONTAL_SPEED: 0.82,          // Cruise top speed forward/back (blocks/tick)
-    MAX_STRAFE_SPEED: 0.62,              // Lateral strafe speed
-    HORIZONTAL_ACCEL: 0.045,             // Acceleration per tick
-    HORIZONTAL_DRAG: 0.91,               // Inertial air resistance drag
+    MAX_HORIZONTAL_SPEED: 0.75,   // Forward/reverse cruise speed (blocks/tick)
+    MAX_STRAFE_SPEED: 0.48,       // Sideways strafe speed
+    HORIZONTAL_ACCEL: 0.040,      // Acceleration per tick
+    HORIZONTAL_DRAG: 0.90,        // Air resistance drag
 
-    MAX_ASCEND_SPEED: 0.52,              // Vertical lift when holding Space (Jump)
-    MAX_DESCEND_SPEED: -0.38,            // Vertical descent when looking down
-    VERTICAL_ACCEL: 0.05,                // Vertical response rate
-    VERTICAL_DRAG: 0.86,                 // Dampening to hold altitude in hover
+    MAX_ASCEND_SPEED: 0.48,       // Climb rate on Space/Jump
+    MAX_DESCEND_SPEED: -0.35,     // Controlled descent rate
+    VERTICAL_ACCEL: 0.045,        // Vertical response rate
+    VERTICAL_DRAG: 0.88,          // Hover dampening rate
 
-    MAX_PITCH_TILT: 20.0,                // Max forward/backward tilt in degrees
-    MAX_ROLL_TILT: 16.0,                 // Max bank angle in degrees
-    TILT_LERP: 0.16,                     // Smooth tilt transition speed
+    MAX_PITCH_TILT: 16.0,         // Forward/backward tilt degrees
+    MAX_ROLL_TILT: 14.0,          // Bank roll degrees
+    TILT_LERP: 0.20,              // Tilt transition speed
 
-    YAW_SMOOTHING: 10,                   // Smoothing factor for turning heading to match player view
-    HOVER_BOB_AMPLITUDE: 0.02            // Realistic aerodynamic micro-bob in hover
+    YAW_SMOOTH_FACTOR: 8,         // Heading smoothing
+    HOVER_BOB_AMPLITUDE: 0.015    // Micro-bobbing in stable hover
 };
 
 export class HelicopterBehavior {
@@ -47,57 +48,52 @@ export class HelicopterBehavior {
 
         this.vx = 0;
         this.vz = 0;
-        this.verticalVelocity = 0;
+        this.vy = 0;
         this.pitchTilt = 0;
         this.rollTilt = 0;
+        this.headingYaw = vehicle.getRotation()?.y || 0;
         this.tickCounter = 0;
-
-        this.histories = {
-            yaw: []
-        };
+        this.yawHistory = [];
     }
 
     setPlayer(player) {
         this.player = player;
     }
 
-    clearPlayer() {
-        this.player = null;
-    }
-
-    getRider() {
-        if (!this.vehicle || !this.vehicle.isValid) return null;
-        const rideable = this.vehicle.getComponent("minecraft:rideable");
-        return rideable?.getRiders()?.find(r => r.typeId === "minecraft:player") || null;
-    }
-
     update() {
         if (this.removed || !this.vehicle || !this.vehicle.isValid) return;
 
         this.tickCounter++;
-        const rider = this.getRider();
+        const hasDriver = this.player && this.player.isValid;
+        const isOnGround = this.vehicle.isOnGround || false;
+        const curVel = this.vehicle.getVelocity() || { x: 0, y: 0, z: 0 };
 
-        // If no player rider - let it fall naturally rather than snap to ground
-        if (!rider || !this.player || !this.player.isValid) {
+        // Unattended handling (rider dismounted in midair or on ground)
+        if (!hasDriver) {
             if (this.state === "flying") {
-                // Gently cut horizontal thrust but let gravity handle landing
                 this.vx *= 0.85;
                 this.vz *= 0.85;
-                this.verticalVelocity = Math.max(this.verticalVelocity - 0.04, -0.3);
+                this.vy = Math.max(this.vy - 0.03, -0.30); // Gentle fall
                 try {
-                    this.vehicle.applyKnockback({ x: this.vx, z: this.vz }, this.verticalVelocity);
+                    this.vehicle.applyImpulse({
+                        x: (this.vx - curVel.x) * 0.5,
+                        y: (this.vy - curVel.y) * 0.5,
+                        z: (this.vz - curVel.z) * 0.5
+                    });
                 } catch (e) {}
-                if (this.vehicle.isOnGround) this.enterGroundMode();
+
+                if (isOnGround) {
+                    this.enterGroundMode();
+                }
             }
             return;
         }
 
         // 1. Gather player inputs
         let isJumping = false;
-        let inputVector = { x: 0, y: 0 };
         let viewDir = { x: 0, y: 0, z: 0 };
-        let playerRot = { x: 0, y: 0 };
-        let hasDirectInput = false;
+        let playerRot = { x: 0, y: this.headingYaw };
+        let inputVec = { x: 0, y: 0 };
 
         try {
             isJumping = this.player.isJumping || false;
@@ -106,166 +102,142 @@ export class HelicopterBehavior {
 
             if (this.player.inputInfo) {
                 const vec = this.player.inputInfo.getMovementVector();
-                if (vec && (Math.abs(vec.x) > 0.05 || Math.abs(vec.y) > 0.05)) {
-                    inputVector = vec;
-                    hasDirectInput = true;
-                }
+                if (vec) inputVec = vec;
             }
         } catch (e) {}
 
-        const currentVel = this.vehicle.getVelocity();
-        const isOnGround = this.vehicle.isOnGround;
+        // Fallback: If on mobile/touch without explicit WASD, view direction steering
+        const forwardInput = inputVec.y > 0.1;
+        const backwardInput = inputVec.y < -0.1;
+        const strafeLeftInput = inputVec.x > 0.1;
+        const strafeRightInput = inputVec.x < -0.1;
 
-        // 2. Smooth Yaw Rotation to face player look direction
-        const smoothYaw = smoothAngle(playerRot.y, this.histories.yaw, HELICOPTER_CONFIG.YAW_SMOOTHING);
-        try {
-            this.vehicle.setRotation({ x: 0, y: smoothYaw });
-        } catch (e) {}
+        // 2. Heading Steering: Yaw follows player camera
+        this.headingYaw = smoothAngle(playerRot.y, this.yawHistory, HELICOPTER_CONFIG.YAW_SMOOTH_FACTOR);
+        this.headingYaw = wrapDegrees(this.headingYaw);
 
-        // Forward and strafe vectors in world space
-        const yawRad = (-smoothYaw) * (Math.PI / 180);
-        const fx = Math.sin(yawRad);
-        const fz = Math.cos(yawRad);
-        const rx = Math.cos(yawRad);
-        const rz = -Math.sin(yawRad);
+        // Calculate world directional vectors from heading
+        const f = getForwardVector(this.headingYaw);
+        const r = getRightVector(this.headingYaw);
 
-        // Fallback input detection from velocity if inputInfo is not active (non-beta world)
-        if (!hasDirectInput) {
-            const forwardVel = currentVel.x * fx + currentVel.z * fz;
-            const rightVel = currentVel.x * rx + currentVel.z * rz;
-
-            if (forwardVel > 0.03) inputVector.y = 1.0;
-            else if (forwardVel < -0.03) inputVector.y = -1.0;
-
-            if (rightVel > 0.03) inputVector.x = 1.0;
-            else if (rightVel < -0.03) inputVector.x = -1.0;
-        }
-
-        // Sync WASD property for client anims
+        // Sync WASD client property
         let wasd = "none";
-        if (inputVector.y > 0.1) wasd = "w";
-        else if (inputVector.y < -0.1) wasd = "s";
-        else if (inputVector.x > 0.1) wasd = "d";
-        else if (inputVector.x < -0.1) wasd = "a";
+        if (forwardInput) wasd = "w";
+        else if (backwardInput) wasd = "s";
+        else if (strafeRightInput) wasd = "d";
+        else if (strafeLeftInput) wasd = "a";
 
         try {
             this.vehicle.setProperty("renderphoenix:wasd", wasd);
         } catch (e) {}
 
-        // 3. State Machine: Grounded vs Flying
+        // 3. Grounded vs Flying State Machine
         if (this.state === "grounded") {
-            // Level out tilt on ground
-            this.pitchTilt += (0 - this.pitchTilt) * 0.2;
-            this.rollTilt += (0 - this.rollTilt) * 0.2;
-            this.syncTiltProperties();
+            this.pitchTilt = lerp(this.pitchTilt, 0, 0.25);
+            this.rollTilt = lerp(this.rollTilt, 0, 0.25);
+            this._syncProperties(false);
 
-            // Lift off only on explicit input - Space, W, or clearly looking up
-            const wantsTakeoff = isJumping || (inputVector.y > 0.1) || (viewDir.y > 0.55);
-            if (wantsTakeoff) {
+            try {
+                this.vehicle.setRotation({ x: 0, y: this.headingYaw });
+            } catch (e) {}
+
+            // Liftoff on Jump / Space or Forward input
+            const wantsLiftoff = isJumping || forwardInput || (viewDir.y > 0.45);
+            if (wantsLiftoff) {
                 this.enterFlightMode();
-                this.verticalVelocity = 0.32; // initial liftoff push
+                this.vy = 0.35; // Initial liftoff push
+                try {
+                    this.vehicle.applyImpulse({ x: 0, y: 0.35, z: 0 });
+                } catch (e) {}
             }
             return;
         }
 
-        // --- FLYING STATE PHYSICS ---
+        // ====================================================================
+        // FLIGHT PHYSICS
+        // ====================================================================
 
-        // 4. Vertical Collective (Ascend / Descend / Hover)
-        if (isJumping || viewDir.y > 0.35) {
-            // Ascend vertically when jumping (Space) OR looking up
-            this.verticalVelocity = Math.min(
-                this.verticalVelocity + HELICOPTER_CONFIG.VERTICAL_ACCEL * 1.5,
-                HELICOPTER_CONFIG.MAX_ASCEND_SPEED
-            );
+        // 4. Vertical Collective (Altitude)
+        if (isJumping || viewDir.y > 0.40) {
+            // Climbing
+            this.vy = Math.min(this.vy + HELICOPTER_CONFIG.VERTICAL_ACCEL, HELICOPTER_CONFIG.MAX_ASCEND_SPEED);
         } else if (viewDir.y < -0.35) {
-            // Descend vertically when looking down sharply
-            this.verticalVelocity = Math.max(
-                this.verticalVelocity - HELICOPTER_CONFIG.VERTICAL_ACCEL * 1.5,
-                HELICOPTER_CONFIG.MAX_DESCEND_SPEED
-            );
+            // Descending
+            this.vy = Math.max(this.vy - HELICOPTER_CONFIG.VERTICAL_ACCEL, HELICOPTER_CONFIG.MAX_DESCEND_SPEED);
         } else {
-            // Stable hover with dampening & micro-bobbing
-            this.verticalVelocity *= HELICOPTER_CONFIG.VERTICAL_DRAG;
-            if (Math.abs(this.verticalVelocity) < 0.02) {
-                this.verticalVelocity = Math.sin(this.tickCounter * 0.15) * HELICOPTER_CONFIG.HOVER_BOB_AMPLITUDE;
+            // Stable hover with altitude dampening
+            this.vy *= HELICOPTER_CONFIG.VERTICAL_DRAG;
+            if (Math.abs(this.vy) < 0.02) {
+                this.vy = Math.sin(this.tickCounter * 0.15) * HELICOPTER_CONFIG.HOVER_BOB_AMPLITUDE;
             }
         }
 
-        // 5. Cyclic Horizontal Flight (WASD)
-        const hasHorizontalInput = Math.abs(inputVector.y) > 0.05 || Math.abs(inputVector.x) > 0.05;
+        // 5. Cyclic Horizontal Flight
+        let targetVx = 0;
+        let targetVz = 0;
 
-        // Target velocities in world space
-        const targetVx = (fx * inputVector.y * HELICOPTER_CONFIG.MAX_HORIZONTAL_SPEED) +
-                         (rx * inputVector.x * HELICOPTER_CONFIG.MAX_STRAFE_SPEED);
-        const targetVz = (fz * inputVector.y * HELICOPTER_CONFIG.MAX_HORIZONTAL_SPEED) +
-                         (rz * inputVector.x * HELICOPTER_CONFIG.MAX_STRAFE_SPEED);
+        if (forwardInput) {
+            targetVx += f.x * HELICOPTER_CONFIG.MAX_HORIZONTAL_SPEED;
+            targetVz += f.z * HELICOPTER_CONFIG.MAX_HORIZONTAL_SPEED;
+        } else if (backwardInput) {
+            targetVx -= f.x * (HELICOPTER_CONFIG.MAX_HORIZONTAL_SPEED * 0.6);
+            targetVz -= f.z * (HELICOPTER_CONFIG.MAX_HORIZONTAL_SPEED * 0.6);
+        }
+
+        if (strafeRightInput) {
+            targetVx += r.x * HELICOPTER_CONFIG.MAX_STRAFE_SPEED;
+            targetVz += r.z * HELICOPTER_CONFIG.MAX_STRAFE_SPEED;
+        } else if (strafeLeftInput) {
+            targetVx -= r.x * HELICOPTER_CONFIG.MAX_STRAFE_SPEED;
+            targetVz -= r.z * HELICOPTER_CONFIG.MAX_STRAFE_SPEED;
+        }
+
+        const hasHorizontalInput = forwardInput || backwardInput || strafeLeftInput || strafeRightInput;
 
         if (hasHorizontalInput) {
-            // Accelerate smoothly towards target
-            this.vx += (targetVx - this.vx) * 0.22;
-            this.vz += (targetVz - this.vz) * 0.22;
+            this.vx = lerp(this.vx, targetVx, 0.20);
+            this.vz = lerp(this.vz, targetVz, 0.20);
         } else {
-            // Natural aerodynamic drag & deceleration
             this.vx *= HELICOPTER_CONFIG.HORIZONTAL_DRAG;
             this.vz *= HELICOPTER_CONFIG.HORIZONTAL_DRAG;
             if (Math.abs(this.vx) < 0.005) this.vx = 0;
             if (Math.abs(this.vz) < 0.005) this.vz = 0;
         }
 
-        // 6. Dynamic Rotor & Fuselage Tilt (Pitch & Roll)
-        const currentSpeed = Math.hypot(this.vx, this.vz);
-        const speedRatio = Math.min(1.0, currentSpeed / HELICOPTER_CONFIG.MAX_HORIZONTAL_SPEED);
-
-        // Pitch tilt: Forward = nose dips DOWN (tail rises) = positive pitch
-        //             Backward = nose pitches UP (tail lowers) = negative pitch
+        // 6. Dynamic Pitch & Bank Roll Tilt
         let targetPitch = 0;
-        if (inputVector.y > 0.05) {
-            targetPitch = HELICOPTER_CONFIG.MAX_PITCH_TILT * speedRatio;   // nose down, tail up
-        } else if (inputVector.y < -0.05) {
-            targetPitch = -HELICOPTER_CONFIG.MAX_PITCH_TILT * 0.8 * speedRatio; // nose up, tail down
-        }
+        if (forwardInput) targetPitch = HELICOPTER_CONFIG.MAX_PITCH_TILT;
+        else if (backwardInput) targetPitch = -HELICOPTER_CONFIG.MAX_PITCH_TILT * 0.75;
 
-        // Roll tilt: Strafe Left = bank left (-Z); Strafe Right = bank right (+Z)
         let targetRoll = 0;
-        if (inputVector.x < -0.05) {
-            targetRoll = -HELICOPTER_CONFIG.MAX_ROLL_TILT;
-        } else if (inputVector.x > 0.05) {
-            targetRoll = HELICOPTER_CONFIG.MAX_ROLL_TILT;
-        }
+        if (strafeRightInput) targetRoll = HELICOPTER_CONFIG.MAX_ROLL_TILT;
+        else if (strafeLeftInput) targetRoll = -HELICOPTER_CONFIG.MAX_ROLL_TILT;
 
-        // Interpolate tilts smoothly
-        this.pitchTilt += (targetPitch - this.pitchTilt) * HELICOPTER_CONFIG.TILT_LERP;
-        this.rollTilt += (targetRoll - this.rollTilt) * HELICOPTER_CONFIG.TILT_LERP;
-        this.syncTiltProperties();
+        this.pitchTilt = lerp(this.pitchTilt, targetPitch, HELICOPTER_CONFIG.TILT_LERP);
+        this.rollTilt = lerp(this.rollTilt, targetRoll, HELICOPTER_CONFIG.TILT_LERP);
+        this._syncProperties(true);
 
-        // 7. Apply 3D aerodynamic flight impulse with fallback
+        // 7. Closed-loop impulse application
+        const impulseX = (this.vx - curVel.x) * 0.85;
+        const impulseY = (this.vy - curVel.y) * 0.85;
+        const impulseZ = (this.vz - curVel.z) * 0.85;
+
         try {
-            this.vehicle.applyKnockback(
-                { x: this.vx, z: this.vz },
-                this.verticalVelocity
-            );
-        } catch (e) {
-            try {
-                this.vehicle.applyImpulse({
-                    x: this.vx * 0.25,
-                    y: this.verticalVelocity * 0.25,
-                    z: this.vz * 0.25
-                });
-            } catch (err) {}
-        }
+            this.vehicle.applyImpulse({ x: impulseX, y: impulseY, z: impulseZ });
+            this.vehicle.setRotation({ x: 0, y: this.headingYaw });
+        } catch (e) {}
 
-        // 8. Touchdown / Landing detection
-        // Only land if: on ground, descending or hovering, not jumping, not holding forward
-        const isHoldingInput = Math.abs(inputVector.y) > 0.05 || Math.abs(inputVector.x) > 0.05;
-        if (isOnGround && this.verticalVelocity <= 0.03 && !isJumping && !isHoldingInput && viewDir.y <= 0.1) {
+        // 8. Soft touchdown landing detection
+        if (isOnGround && this.vy <= 0.05 && !isJumping && !forwardInput && viewDir.y <= 0.1) {
             this.enterGroundMode();
         }
     }
 
-    syncTiltProperties() {
+    _syncProperties(isFlying) {
         try {
             this.vehicle.setProperty("renderphoenix:heli_pitch", mathClamp(this.pitchTilt, -45, 45));
             this.vehicle.setProperty("renderphoenix:heli_roll", mathClamp(this.rollTilt, -45, 45));
+            this.vehicle.setProperty("renderphoenix:heli_flying", isFlying);
         } catch (e) {}
     }
 
@@ -281,7 +253,7 @@ export class HelicopterBehavior {
         this.state = "grounded";
         this.vx = 0;
         this.vz = 0;
-        this.verticalVelocity = 0;
+        this.vy = 0;
         this.pitchTilt = 0;
         this.rollTilt = 0;
         try {
@@ -296,60 +268,4 @@ export class HelicopterBehavior {
         this.removed = true;
         this.enterGroundMode();
     }
-}
-
-// Active session registry
-const activeHelicopterSessions = new Map(); // vehicleId -> HelicopterBehavior
-
-export function tickHelicopterPhysics() {
-    // 1. Clean up invalid sessions
-    for (const [vehicleId, behavior] of activeHelicopterSessions.entries()) {
-        if (!behavior.vehicle || !behavior.vehicle.isValid) {
-            behavior.cleanup();
-            activeHelicopterSessions.delete(vehicleId);
-        }
-    }
-
-    // 2. Discover helicopters with riders
-    const players = world.getPlayers();
-    for (const player of players) {
-        const vehicle = getPlayerRidingHelicopter(player);
-        if (vehicle && vehicle.typeId === "renderphoenix:helicopter") {
-            let behavior = activeHelicopterSessions.get(vehicle.id);
-            if (!behavior) {
-                behavior = new HelicopterBehavior(vehicle, player);
-                activeHelicopterSessions.set(vehicle.id, behavior);
-            } else {
-                behavior.setPlayer(player);
-            }
-        }
-    }
-
-    // 3. Update all active helicopter behaviors
-    for (const [vehicleId, behavior] of activeHelicopterSessions.entries()) {
-        try {
-            behavior.update();
-        } catch (e) {
-            // Prevent crashes
-        }
-    }
-}
-
-function getPlayerRidingHelicopter(player) {
-    try {
-        const dim = player.dimension;
-        const nearby = dim.getEntities({
-            location: player.location,
-            maxDistance: 6,
-            type: "renderphoenix:helicopter"
-        });
-
-        for (const vehicle of nearby) {
-            const rideable = vehicle.getComponent("minecraft:rideable");
-            if (rideable?.getRiders().some(r => r.id === player.id)) {
-                return vehicle;
-            }
-        }
-    } catch (e) {}
-    return null;
 }

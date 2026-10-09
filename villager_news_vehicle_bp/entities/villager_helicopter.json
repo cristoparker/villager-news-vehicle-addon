@@ -6,6 +6,14 @@
       "is_spawnable": true,
       "is_summonable": true,
       "is_experimental": false,
+      "animations": {
+        "flight_controller": "controller.animation.villager_helicopter.flight"
+      },
+      "scripts": {
+        "animate": [
+          "flight_controller"
+        ]
+      },
       "properties": {
         "renderphoenix:heli_pitch": {
           "type": "float",
@@ -75,13 +83,6 @@
         },
         "minecraft:movement": {
           "value": 0.65
-        },
-        "minecraft:input_air_controlled": {
-          "strafe_speed_modifier": 0.85,
-          "backwards_movement_modifier": 0.7
-        },
-        "minecraft:vertical_movement_action": {
-          "vertical_velocity": 0.55
         }
       },
       "renderphoenix:villager_flight": {
