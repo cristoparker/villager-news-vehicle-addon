@@ -17,9 +17,23 @@
         "look_at_target": "animation.firefighter.look_at_target"
       },
       "scripts": {
+        "should_update_bones_and_effects_offscreen": true,
         "animate": [
           "wheels",
           "look_at_target"
+        ],
+        "initialize": [
+          "v.wheel_rot = 0;",
+          "v.steer_angle = 0;"
+        ],
+        "pre_animation": [
+          "v.wasd = query.property('renderphoenix:wasd');",
+          "v.move_dir = (v.wasd == 's' || v.wasd == 'sa' || v.wasd == 'sd') ? -1 : 1;",
+          "v.wheel_speed = v.move_dir * query.ground_speed * 180;",
+          "v.wheel_rot = math.mod((v.wheel_rot ?? 0) + v.wheel_speed * query.delta_time, 360);",
+          "variable.rider_diff = query.has_rider ? (query.rider_body_y_rotation(0) - query.body_y_rotation) : 0;",
+          "variable.steer_diff = (v.wasd == 'a' || v.wasd == 'wa' || v.wasd == 'sa') ? -25 : ((v.wasd == 'd' || v.wasd == 'wd' || v.wasd == 'sd') ? 25 : math.clamp(variable.rider_diff, -25, 25));",
+          "v.steer_angle = query.has_rider ? variable.steer_diff : 0;"
         ]
       },
       "render_controllers": [

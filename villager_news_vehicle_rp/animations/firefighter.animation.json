@@ -1,20 +1,21 @@
 {
-  "format_version": "1.8.0",
+  "format_version": "1.10.0",
   "animations": {
     "animation.firefighter.wheels": {
       "loop": true,
+      "anim_time_update": "query.anim_time + query.delta_time",
       "bones": {
         "wheel1": {
-          "rotation": ["query.modified_distance_moved * 150", 0, 0]
-        },
-        "wheel2": {
-          "rotation": ["query.modified_distance_moved * 150", 0, 0]
+          "rotation": ["v.wheel_rot", "v.steer_angle", 0]
         },
         "wheel3": {
-          "rotation": ["query.modified_distance_moved * 150", 0, 0]
+          "rotation": ["v.wheel_rot", "v.steer_angle", 0]
+        },
+        "wheel2": {
+          "rotation": ["v.wheel_rot", 0, 0]
         },
         "wheel4": {
-          "rotation": ["query.modified_distance_moved * 150", 0, 0]
+          "rotation": ["v.wheel_rot", 0, 0]
         }
       }
     },

@@ -16,6 +16,11 @@ export function wrapDegrees(deg) {
     return result - 180;
 }
 
+export function lerpAngle(current, target, t) {
+    const diff = wrapDegrees(target - current);
+    return wrapDegrees(current + diff * t);
+}
+
 export function smoothValue(newValue, history, factor) {
     if (!history) return newValue;
     history.push(newValue);
@@ -26,17 +31,14 @@ export function smoothValue(newValue, history, factor) {
 export function smoothAngle(newAngle, history, factor) {
     if (!history) return newAngle;
     const lastAngle = history.length > 0 ? history[history.length - 1] : newAngle;
-    let delta = newAngle - lastAngle;
-
-    // Handle 180 deg wrap-around
-    if (delta > 180) delta -= 360;
-    if (delta < -180) delta += 360;
+    const delta = wrapDegrees(newAngle - lastAngle);
 
     const smoothedAngle = lastAngle + delta;
     history.push(smoothedAngle);
     if (history.length > factor) history.shift();
 
-    return history.reduce((sum, angle) => sum + angle, 0) / history.length;
+    const avg = history.reduce((sum, angle) => sum + angle, 0) / history.length;
+    return wrapDegrees(avg);
 }
 
 /**

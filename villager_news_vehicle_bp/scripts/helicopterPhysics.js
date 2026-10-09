@@ -18,7 +18,7 @@
  */
 
 import { world, system } from "@minecraft/server";
-import { mathClamp, wrapDegrees, smoothAngle, getForwardVector, getRightVector, lerp } from "./mathUtils.js";
+import { mathClamp, wrapDegrees, lerpAngle, smoothAngle, getForwardVector, getRightVector, lerp } from "./mathUtils.js";
 
 export const HELICOPTER_CONFIG = {
     MAX_HORIZONTAL_SPEED: 0.75,   // Forward/reverse cruise speed (blocks/tick)
@@ -33,9 +33,9 @@ export const HELICOPTER_CONFIG = {
 
     MAX_PITCH_TILT: 16.0,         // Forward/backward tilt degrees
     MAX_ROLL_TILT: 14.0,          // Bank roll degrees
-    TILT_LERP: 0.20,              // Tilt transition speed
+    TILT_LERP: 0.18,              // Tilt transition speed
 
-    YAW_SMOOTH_FACTOR: 8,         // Heading smoothing
+    YAW_SMOOTH_FACTOR: 6,         // Heading smoothing
     HOVER_BOB_AMPLITUDE: 0.015    // Micro-bobbing in stable hover
 };
 
@@ -52,6 +52,7 @@ export class HelicopterBehavior {
         this.pitchTilt = 0;
         this.rollTilt = 0;
         this.headingYaw = vehicle.getRotation()?.y || 0;
+        this.currentYaw = this.headingYaw;
         this.tickCounter = 0;
         this.yawHistory = [];
     }
@@ -76,9 +77,9 @@ export class HelicopterBehavior {
                 this.vy = Math.max(this.vy - 0.03, -0.30); // Gentle fall
                 try {
                     this.vehicle.applyImpulse({
-                        x: (this.vx - curVel.x) * 0.5,
-                        y: (this.vy - curVel.y) * 0.5,
-                        z: (this.vz - curVel.z) * 0.5
+                        x: (this.vx - curVel.x) * 0.35,
+                        y: (this.vy - curVel.y) * 0.35,
+                        z: (this.vz - curVel.z) * 0.35
                     });
                 } catch (e) {}
 
@@ -86,6 +87,9 @@ export class HelicopterBehavior {
                     this.enterGroundMode();
                 }
             }
+            try {
+                this.vehicle.setProperty("renderphoenix:wasd", "none");
+            } catch (e) {}
             return;
         }
 
@@ -106,19 +110,18 @@ export class HelicopterBehavior {
             }
         } catch (e) {}
 
-        // Fallback: If on mobile/touch without explicit WASD, view direction steering
         const forwardInput = inputVec.y > 0.1;
         const backwardInput = inputVec.y < -0.1;
         const strafeLeftInput = inputVec.x > 0.1;
         const strafeRightInput = inputVec.x < -0.1;
 
-        // 2. Heading Steering: Yaw follows player camera
+        // 2. Heading Steering: Yaw follows player camera smoothly
         this.headingYaw = smoothAngle(playerRot.y, this.yawHistory, HELICOPTER_CONFIG.YAW_SMOOTH_FACTOR);
-        this.headingYaw = wrapDegrees(this.headingYaw);
+        this.currentYaw = lerpAngle(this.currentYaw, this.headingYaw, 0.35);
 
         // Calculate world directional vectors from heading
-        const f = getForwardVector(this.headingYaw);
-        const r = getRightVector(this.headingYaw);
+        const f = getForwardVector(this.currentYaw);
+        const r = getRightVector(this.currentYaw);
 
         // Sync WASD client property
         let wasd = "none";
@@ -138,7 +141,7 @@ export class HelicopterBehavior {
             this._syncProperties(false);
 
             try {
-                this.vehicle.setRotation({ x: 0, y: this.headingYaw });
+                this.vehicle.setRotation({ x: 0, y: this.currentYaw });
             } catch (e) {}
 
             // Liftoff on Jump / Space or Forward input
@@ -195,8 +198,8 @@ export class HelicopterBehavior {
         const hasHorizontalInput = forwardInput || backwardInput || strafeLeftInput || strafeRightInput;
 
         if (hasHorizontalInput) {
-            this.vx = lerp(this.vx, targetVx, 0.20);
-            this.vz = lerp(this.vz, targetVz, 0.20);
+            this.vx = lerp(this.vx, targetVx, 0.18);
+            this.vz = lerp(this.vz, targetVz, 0.18);
         } else {
             this.vx *= HELICOPTER_CONFIG.HORIZONTAL_DRAG;
             this.vz *= HELICOPTER_CONFIG.HORIZONTAL_DRAG;
@@ -217,14 +220,14 @@ export class HelicopterBehavior {
         this.rollTilt = lerp(this.rollTilt, targetRoll, HELICOPTER_CONFIG.TILT_LERP);
         this._syncProperties(true);
 
-        // 7. Closed-loop impulse application
-        const impulseX = (this.vx - curVel.x) * 0.85;
-        const impulseY = (this.vy - curVel.y) * 0.85;
-        const impulseZ = (this.vz - curVel.z) * 0.85;
+        // 7. Stable critically-damped impulse application
+        const impulseX = (this.vx - curVel.x) * 0.35;
+        const impulseY = (this.vy - curVel.y) * 0.35;
+        const impulseZ = (this.vz - curVel.z) * 0.35;
 
         try {
             this.vehicle.applyImpulse({ x: impulseX, y: impulseY, z: impulseZ });
-            this.vehicle.setRotation({ x: 0, y: this.headingYaw });
+            this.vehicle.setRotation({ x: 0, y: this.currentYaw });
         } catch (e) {}
 
         // 8. Soft touchdown landing detection
@@ -261,6 +264,7 @@ export class HelicopterBehavior {
             this.vehicle.setProperty("renderphoenix:heli_flying", false);
             this.vehicle.setProperty("renderphoenix:heli_pitch", 0.0);
             this.vehicle.setProperty("renderphoenix:heli_roll", 0.0);
+            this.vehicle.setProperty("renderphoenix:wasd", "none");
         } catch (e) {}
     }
 

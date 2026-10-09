@@ -13,6 +13,20 @@
         "animate": [
           "pilot_controller"
         ]
+      },
+      "properties": {
+        "renderphoenix:wasd": {
+          "type": "enum",
+          "values": [
+            "w",
+            "a",
+            "s",
+            "d",
+            "none"
+          ],
+          "default": "none",
+          "client_sync": true
+        }
       }
     },
     "component_groups": {
@@ -21,12 +35,7 @@
           "value": 0.0
         }
       },
-      "renderphoenix:boat_player_pilot": {
-        "minecraft:input_ground_controlled": {},
-        "minecraft:movement": {
-          "value": 0.5
-        }
-      },
+      "renderphoenix:boat_player_pilot": {},
       "renderphoenix:boat_villager_pilot": {
         "minecraft:movement": {
           "value": 0.35

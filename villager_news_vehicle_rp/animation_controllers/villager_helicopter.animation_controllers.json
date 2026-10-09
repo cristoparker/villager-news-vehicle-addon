@@ -1,6 +1,49 @@
 {
   "format_version": "1.10.0",
   "animation_controllers": {
+    "controller.animation.villager_helicopter.propellers": {
+      "initial_state": "stopped",
+      "states": {
+        "stopped": {
+          "transitions": [
+            {
+              "standby": "query.has_rider && !query.property('renderphoenix:heli_flying')"
+            },
+            {
+              "flying": "query.has_rider && query.property('renderphoenix:heli_flying')"
+            }
+          ]
+        },
+        "standby": {
+          "animations": [
+            "propellers_standby"
+          ],
+          "transitions": [
+            {
+              "stopped": "!query.has_rider"
+            },
+            {
+              "flying": "query.has_rider && query.property('renderphoenix:heli_flying')"
+            }
+          ],
+          "blend_transition": 0.4
+        },
+        "flying": {
+          "animations": [
+            "propellers"
+          ],
+          "transitions": [
+            {
+              "stopped": "!query.has_rider"
+            },
+            {
+              "standby": "query.has_rider && !query.property('renderphoenix:heli_flying')"
+            }
+          ],
+          "blend_transition": 0.4
+        }
+      }
+    },
     "controller.animation.villager_helicopter.sound": {
       "states": {
         "default": {

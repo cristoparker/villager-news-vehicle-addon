@@ -13,7 +13,9 @@
         "default": "geometry.renderphoenix.helicopter"
       },
       "animations": {
+        "propeller_controller": "controller.animation.villager_helicopter.propellers",
         "propellers": "animation.villager_helicopter.propellers",
+        "propellers_standby": "animation.villager_helicopter.propellers_standby",
         "tilt": "animation.villager_helicopter.tilt",
         "sound_controller": "controller.animation.villager_helicopter.sound",
         "engine_sound": "animation.villager_helicopter.engine_sound",
@@ -22,7 +24,7 @@
       "scripts": {
         "should_update_bones_and_effects_offscreen": true,
         "animate": [
-          "propellers",
+          "propeller_controller",
           "tilt",
           "sound_controller"
         ],

@@ -1,15 +1,39 @@
 {
-  "format_version": "1.8.0",
+  "format_version": "1.10.0",
   "animations": {
     "animation.villager_helicopter.propellers": {
       "loop": true,
-      "animation_length": 1.0,
+      "animation_length": 0.2,
       "bones": {
         "main_propeller": {
-          "rotation": [0, "query.life_time * 1800", 0]
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "0.2": [0, 360, 0]
+          }
         },
         "back_propeller": {
-          "rotation": ["query.life_time * 1800", 0, 0]
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "0.2": [360, 0, 0]
+          }
+        }
+      }
+    },
+    "animation.villager_helicopter.propellers_standby": {
+      "loop": true,
+      "animation_length": 0.6,
+      "bones": {
+        "main_propeller": {
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "0.6": [0, 360, 0]
+          }
+        },
+        "back_propeller": {
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "0.6": [360, 0, 0]
+          }
         }
       }
     },

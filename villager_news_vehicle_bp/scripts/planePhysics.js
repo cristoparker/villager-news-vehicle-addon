@@ -23,7 +23,7 @@
  */
 
 import { world, system } from "@minecraft/server";
-import { mathClamp, wrapDegrees, smoothAngle, getForwardVector, lerp } from "./mathUtils.js";
+import { mathClamp, wrapDegrees, lerpAngle, smoothAngle, getForwardVector, lerp } from "./mathUtils.js";
 
 export const PLANE_CONFIG = {
     // Airspeeds (blocks/tick: 1 block/tick = 72 km/h)
@@ -72,6 +72,7 @@ export class PlaneBehavior {
         this.trick = "ready";
 
         this.headingYaw = vehicle.getRotation()?.y || 0;
+        this.currentYaw = this.headingYaw;
         this.currentPitch = 0;
         this.bankRoll = 0;
         this.removed = false;
@@ -171,20 +172,21 @@ export class PlaneBehavior {
             this._enterTakeoff();
         } else {
             this.airspeed = Math.max(0, this.airspeed - PLANE_CONFIG.TAXI_BRAKE);
-            this.currentPitch = lerp(this.currentPitch, 0, 0.2);
-            this.bankRoll = lerp(this.bankRoll, 0, 0.2);
+            this.currentPitch = lerp(this.currentPitch, 0, 0.15);
+            this.bankRoll = lerp(this.bankRoll, 0, 0.15);
 
-            if (Math.abs(curVel.x) > 0.02 || Math.abs(curVel.z) > 0.02) {
+            if (Math.hypot(curVel.x, curVel.z) > 0.04) {
                 try {
                     this.vehicle.applyImpulse({
-                        x: -curVel.x * 0.4,
+                        x: -curVel.x * 0.25,
                         y: 0,
-                        z: -curVel.z * 0.4
+                        z: -curVel.z * 0.25
                     });
                 } catch (e) {}
             }
+            this.currentYaw = lerpAngle(this.currentYaw, this.headingYaw, 0.35);
             try {
-                this.vehicle.setRotation({ x: 0, y: this.headingYaw });
+                this.vehicle.setRotation({ x: 0, y: this.currentYaw });
             } catch (e) {}
         }
     }
@@ -194,22 +196,23 @@ export class PlaneBehavior {
             // Accelerate along runway
             this.airspeed = Math.min(this.airspeed + PLANE_CONFIG.TAXI_ACCEL, PLANE_CONFIG.MAX_TAXI_SPEED);
 
-            // Ground steering follows pilot look
+            // Ground steering follows pilot look smoothly
             const yawDiff = wrapDegrees(playerRot.y - this.headingYaw);
-            this.headingYaw += mathClamp(yawDiff * 0.14, -PLANE_CONFIG.YAW_TURN_RATE, PLANE_CONFIG.YAW_TURN_RATE);
+            this.headingYaw += mathClamp(yawDiff * 0.12, -PLANE_CONFIG.YAW_TURN_RATE, PLANE_CONFIG.YAW_TURN_RATE);
             this.headingYaw = wrapDegrees(this.headingYaw);
+            this.currentYaw = lerpAngle(this.currentYaw, this.headingYaw, 0.35);
 
-            const f = getForwardVector(this.headingYaw);
+            const f = getForwardVector(this.currentYaw);
             const targetVx = f.x * this.airspeed;
             const targetVz = f.z * this.airspeed;
 
             try {
                 this.vehicle.applyImpulse({
-                    x: (targetVx - curVel.x) * 0.8,
+                    x: (targetVx - curVel.x) * 0.35,
                     y: 0,
-                    z: (targetVz - curVel.z) * 0.8
+                    z: (targetVz - curVel.z) * 0.35
                 });
-                this.vehicle.setRotation({ x: 0, y: this.headingYaw });
+                this.vehicle.setRotation({ x: 0, y: this.currentYaw });
             } catch (e) {}
 
             this.takeoffTicks--;
@@ -265,12 +268,13 @@ export class PlaneBehavior {
         // 2. Pitch Control (Climbing and Diving)
         // In Minecraft: negative pitch is UP (climbing), positive is DOWN (diving)
         const targetPitch = mathClamp(playerRot.x * 0.85, -PLANE_CONFIG.PITCH_MAX, PLANE_CONFIG.PITCH_MAX);
-        this.currentPitch = lerp(this.currentPitch, targetPitch, 0.16);
+        this.currentPitch = lerp(this.currentPitch, targetPitch, 0.14);
 
         // 3. Yaw Steering & Heading
         const yawDiff = wrapDegrees(playerRot.y - this.headingYaw);
-        this.headingYaw += mathClamp(yawDiff * 0.15, -PLANE_CONFIG.YAW_TURN_RATE, PLANE_CONFIG.YAW_TURN_RATE);
+        this.headingYaw += mathClamp(yawDiff * 0.12, -PLANE_CONFIG.YAW_TURN_RATE, PLANE_CONFIG.YAW_TURN_RATE);
         this.headingYaw = wrapDegrees(this.headingYaw);
+        this.currentYaw = lerpAngle(this.currentYaw, this.headingYaw, 0.35);
 
         // 4. Aerodynamic Bank Angle (Roll)
         if (this.barrelRollTicks > 0) {
@@ -298,7 +302,7 @@ export class PlaneBehavior {
 
         // Horizontal forward thrust accounting for pitch angle
         const forwardThrust = this.airspeed * Math.cos(pitchRad);
-        const f = getForwardVector(this.headingYaw);
+        const f = getForwardVector(this.currentYaw);
 
         let targetVx = f.x * forwardThrust;
         let targetVz = f.z * forwardThrust;
@@ -310,14 +314,14 @@ export class PlaneBehavior {
             targetVz += r.z * this.barrelRollDir * 0.35;
         }
 
-        // 6. Closed-Loop Delta Velocity Impulse
-        const impulseX = (targetVx - curVel.x) * 0.85;
-        const impulseY = (netVy - curVel.y) * 0.85;
-        const impulseZ = (targetVz - curVel.z) * 0.85;
+        // 6. Stable critically-damped impulse application
+        const impulseX = (targetVx - curVel.x) * 0.35;
+        const impulseY = (netVy - curVel.y) * 0.35;
+        const impulseZ = (targetVz - curVel.z) * 0.35;
 
         try {
             this.vehicle.applyImpulse({ x: impulseX, y: impulseY, z: impulseZ });
-            this.vehicle.setRotation({ x: this.currentPitch, y: this.headingYaw });
+            this.vehicle.setRotation({ x: this.currentPitch, y: this.currentYaw });
         } catch (e) {}
     }
 
@@ -362,6 +366,7 @@ export class PlaneBehavior {
 
         try {
             this.vehicle.setProperty("renderphoenix:plane_state", "stationary");
+            this.vehicle.setProperty("renderphoenix:wasd", "none");
             this.vehicle.triggerEvent("renderphoenix:enter_ground_mode");
         } catch (e) {}
     }

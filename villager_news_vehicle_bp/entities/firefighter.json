@@ -13,6 +13,24 @@
         "animate": [
           "pilot_controller"
         ]
+      },
+      "properties": {
+        "renderphoenix:wasd": {
+          "type": "enum",
+          "values": [
+            "w",
+            "a",
+            "s",
+            "d",
+            "wa",
+            "wd",
+            "sa",
+            "sd",
+            "none"
+          ],
+          "default": "none",
+          "client_sync": true
+        }
       }
     },
     "component_groups": {
@@ -33,12 +51,7 @@
           "priority": 8
         }
       },
-      "renderphoenix:firefighter_player_pilot": {
-        "minecraft:input_ground_controlled": {},
-        "minecraft:movement": {
-          "value": 0.55
-        }
-      }
+      "renderphoenix:firefighter_player_pilot": {}
     },
     "components": {
       "minecraft:is_hidden_when_invisible": {},

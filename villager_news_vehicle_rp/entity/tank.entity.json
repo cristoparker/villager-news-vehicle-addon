@@ -17,9 +17,28 @@
         "turret": "animation.tank.turret_look"
       },
       "scripts": {
+        "should_update_bones_and_effects_offscreen": true,
         "animate": [
           "wheels",
           "turret"
+        ],
+        "initialize": [
+          "v.track_r = 0;",
+          "v.track_l = 0;"
+        ],
+        "pre_animation": [
+          "v.wasd = query.property('renderphoenix:wasd');",
+          "v.is_pivot_l = (v.wasd == 'a');",
+          "v.is_pivot_r = (v.wasd == 'd');",
+          "v.is_rev = (v.wasd == 's' || v.wasd == 'sa' || v.wasd == 'sd');",
+          "v.spd = (v.is_pivot_l || v.is_pivot_r) ? ((query.ground_speed > 0.05) ? query.ground_speed : 2.0) : query.ground_speed;",
+          "v.l_mult = v.is_pivot_l ? -1.0 : (v.is_pivot_r ? 1.0 : ((v.wasd == 'sa') ? -0.4 : (v.is_rev ? -1.0 : ((v.wasd == 'wa') ? 0.4 : 1.0))));",
+          "v.r_mult = v.is_pivot_l ? 1.0 : (v.is_pivot_r ? -1.0 : ((v.wasd == 'sd') ? -0.4 : (v.is_rev ? -1.0 : ((v.wasd == 'wd') ? 0.4 : 1.0))));",
+          "v.is_stopped = (v.wasd == 'none' && query.ground_speed <= 0.02);",
+          "v.l_rate = v.is_stopped ? 0 : (v.l_mult * v.spd);",
+          "v.r_rate = v.is_stopped ? 0 : (v.r_mult * v.spd);",
+          "v.track_l = (v.track_l ?? 0) + v.l_rate * query.delta_time;",
+          "v.track_r = (v.track_r ?? 0) + v.r_rate * query.delta_time;"
         ]
       },
       "render_controllers": [

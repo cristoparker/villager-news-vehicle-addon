@@ -10,7 +10,7 @@
           ],
           "transitions": [
             {
-              "flying": "query.has_rider"
+              "flying": "query.property('renderphoenix:heli_flying')"
             }
           ]
         },
@@ -20,7 +20,7 @@
           ],
           "transitions": [
             {
-              "grounded": "!query.has_rider"
+              "grounded": "!query.property('renderphoenix:heli_flying')"
             }
           ]
         }

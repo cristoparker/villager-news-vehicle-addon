@@ -4,14 +4,14 @@
  */
 
 import { world, system } from "@minecraft/server";
-import { mathClamp, wrapDegrees, getForwardVector, lerp } from "./mathUtils.js";
+import { mathClamp, wrapDegrees, lerpAngle, getForwardVector, lerp } from "./mathUtils.js";
 
 /**
  * Extracts player input states reliably across Keyboard, Controller, and Mobile/Touch.
  */
 export function getPlayerDriverInput(player, vehicleYaw) {
     if (!player || !player.isValid) {
-        return { forward: false, backward: false, left: false, right: false, isJumping: false, yawDiff: 0 };
+        return { forward: false, backward: false, left: false, right: false, isJumping: false, yawDiff: 0, inputX: 0, inputY: 0 };
     }
 
     let inputVec = null;
@@ -33,8 +33,12 @@ export function getPlayerDriverInput(player, vehicleYaw) {
     let backward = false;
     let left = false;
     let right = false;
+    let inputX = 0;
+    let inputY = 0;
 
     if (inputVec && (Math.abs(inputVec.x) > 0.05 || Math.abs(inputVec.y) > 0.05)) {
+        inputX = inputVec.x;
+        inputY = inputVec.y;
         forward = inputVec.y > 0.1 || isJumping;
         backward = inputVec.y < -0.1;
         // In Bedrock getMovementVector: positive X is Left, negative X is Right
@@ -46,7 +50,7 @@ export function getPlayerDriverInput(player, vehicleYaw) {
         forward = isJumping;
     }
 
-    return { forward, backward, left, right, isJumping, yawDiff };
+    return { forward, backward, left, right, isJumping, yawDiff, inputX, inputY };
 }
 
 // ============================================================================
@@ -66,6 +70,7 @@ export class FirefighterBehavior {
         this.player = player;
         this.currentSpeed = 0;
         this.headingYaw = vehicle.getRotation()?.y || 0;
+        this.currentYaw = this.headingYaw;
         this.removed = false;
     }
 
@@ -80,27 +85,44 @@ export class FirefighterBehavior {
         const curVel = this.vehicle.getVelocity() || { x: 0, y: 0, z: 0 };
 
         if (!hasDriver) {
-            // Decelerate to stop when rider dismounts
+            // Decelerate smoothly to stop when rider dismounts
             if (Math.abs(this.currentSpeed) > 0.02) {
-                this.currentSpeed = lerp(this.currentSpeed, 0, 0.25);
-                const f = getForwardVector(this.headingYaw);
-                const targetVx = f.x * this.currentSpeed;
-                const targetVz = f.z * this.currentSpeed;
+                this.currentSpeed = lerp(this.currentSpeed, 0, 0.15);
+                const f = getForwardVector(this.currentYaw);
                 try {
                     this.vehicle.applyImpulse({
-                        x: (targetVx - curVel.x) * 0.7,
+                        x: (f.x * this.currentSpeed - curVel.x) * 0.35,
                         y: 0,
-                        z: (targetVz - curVel.z) * 0.7
+                        z: (f.z * this.currentSpeed - curVel.z) * 0.35
                     });
                 } catch (e) {}
             } else {
                 this.currentSpeed = 0;
             }
+            try {
+                this.vehicle.setProperty("renderphoenix:wasd", "none");
+            } catch (e) {}
             return;
         }
 
         // Process inputs
-        const input = getPlayerDriverInput(this.player, this.headingYaw);
+        const input = getPlayerDriverInput(this.player, this.currentYaw);
+
+        // Synchronize wasd property for client animations
+        let wasd = "none";
+        if (input.forward) {
+            wasd = input.left ? "wa" : (input.right ? "wd" : "w");
+        } else if (input.backward) {
+            wasd = input.left ? "sa" : (input.right ? "sd" : "s");
+        } else if (input.right) {
+            wasd = "d";
+        } else if (input.left) {
+            wasd = "a";
+        }
+
+        try {
+            this.vehicle.setProperty("renderphoenix:wasd", wasd);
+        } catch (e) {}
 
         // Throttle & Acceleration
         if (input.forward) {
@@ -118,30 +140,44 @@ export class FirefighterBehavior {
 
         // Steering (Inverts when reversing for realistic vehicular turning)
         const steerDir = this.currentSpeed >= 0 ? 1 : -1;
-        const isMoving = Math.abs(this.currentSpeed) > 0.03;
+        const isMoving = Math.abs(this.currentSpeed) > 0.02;
 
         if (input.left) {
             this.headingYaw -= FIREFIGHTER_CONFIG.TURN_RATE * steerDir;
         } else if (input.right) {
             this.headingYaw += FIREFIGHTER_CONFIG.TURN_RATE * steerDir;
-        } else if (isMoving && Math.abs(input.yawDiff) > 20) {
-            // Mobile/camera steering assistance
-            this.headingYaw += mathClamp(input.yawDiff * 0.12, -FIREFIGHTER_CONFIG.TURN_RATE, FIREFIGHTER_CONFIG.TURN_RATE) * steerDir;
+        } else if (isMoving && Math.abs(input.yawDiff) > 5) {
+            // Smooth camera steering assistance without abrupt step thresholds
+            this.headingYaw += mathClamp(input.yawDiff * 0.06, -FIREFIGHTER_CONFIG.TURN_RATE, FIREFIGHTER_CONFIG.TURN_RATE) * steerDir;
         }
         this.headingYaw = wrapDegrees(this.headingYaw);
 
-        // Apply local forward motion
-        const f = getForwardVector(this.headingYaw);
+        // Smooth angle interpolation eliminates heading snap/jitter
+        this.currentYaw = lerpAngle(this.currentYaw, this.headingYaw, 0.35);
+
+        // Apply local forward motion with stable, critically-damped impulse
+        const f = getForwardVector(this.currentYaw);
         const targetVx = f.x * this.currentSpeed;
         const targetVz = f.z * this.currentSpeed;
 
-        const impulseX = (targetVx - curVel.x) * 0.85;
-        const impulseZ = (targetVz - curVel.z) * 0.85;
-
-        try {
-            this.vehicle.applyImpulse({ x: impulseX, y: 0, z: impulseZ });
-            this.vehicle.setRotation({ x: 0, y: this.headingYaw });
-        } catch (e) {}
+        if (Math.abs(this.currentSpeed) > 0.01) {
+            const impulseX = (targetVx - curVel.x) * 0.35;
+            const impulseZ = (targetVz - curVel.z) * 0.35;
+            try {
+                this.vehicle.applyImpulse({ x: impulseX, y: 0, z: impulseZ });
+                this.vehicle.setRotation({ x: 0, y: this.currentYaw });
+            } catch (e) {}
+        } else {
+            // When stopped, gently dampen residual drift
+            if (Math.hypot(curVel.x, curVel.z) > 0.02) {
+                try {
+                    this.vehicle.applyImpulse({ x: -curVel.x * 0.25, y: 0, z: -curVel.z * 0.25 });
+                } catch (e) {}
+            }
+            try {
+                this.vehicle.setRotation({ x: 0, y: this.currentYaw });
+            } catch (e) {}
+        }
     }
 
     cleanup() {
@@ -166,6 +202,7 @@ export class TankBehavior {
         this.player = player;
         this.currentSpeed = 0;
         this.headingYaw = vehicle.getRotation()?.y || 0;
+        this.currentYaw = this.headingYaw;
         this.removed = false;
     }
 
@@ -181,22 +218,41 @@ export class TankBehavior {
 
         if (!hasDriver) {
             if (Math.abs(this.currentSpeed) > 0.02) {
-                this.currentSpeed = lerp(this.currentSpeed, 0, 0.25);
-                const f = getForwardVector(this.headingYaw);
+                this.currentSpeed = lerp(this.currentSpeed, 0, 0.15);
+                const f = getForwardVector(this.currentYaw);
                 try {
                     this.vehicle.applyImpulse({
-                        x: (f.x * this.currentSpeed - curVel.x) * 0.7,
+                        x: (f.x * this.currentSpeed - curVel.x) * 0.35,
                         y: 0,
-                        z: (f.z * this.currentSpeed - curVel.z) * 0.7
+                        z: (f.z * this.currentSpeed - curVel.z) * 0.35
                     });
                 } catch (e) {}
             } else {
                 this.currentSpeed = 0;
             }
+            try {
+                this.vehicle.setProperty("renderphoenix:wasd", "none");
+            } catch (e) {}
             return;
         }
 
-        const input = getPlayerDriverInput(this.player, this.headingYaw);
+        const input = getPlayerDriverInput(this.player, this.currentYaw);
+
+        // Synchronize wasd property for client track animations
+        let wasd = "none";
+        if (input.forward) {
+            wasd = input.left ? "wa" : (input.right ? "wd" : "w");
+        } else if (input.backward) {
+            wasd = input.left ? "sa" : (input.right ? "sd" : "s");
+        } else if (input.right) {
+            wasd = "d";
+        } else if (input.left) {
+            wasd = "a";
+        }
+
+        try {
+            this.vehicle.setProperty("renderphoenix:wasd", wasd);
+        } catch (e) {}
 
         // Throttle & Acceleration
         if (input.forward) {
@@ -216,23 +272,36 @@ export class TankBehavior {
             this.headingYaw -= TANK_CONFIG.TURN_RATE;
         } else if (input.right) {
             this.headingYaw += TANK_CONFIG.TURN_RATE;
-        } else if (Math.abs(this.currentSpeed) > 0.03 && Math.abs(input.yawDiff) > 25) {
-            this.headingYaw += mathClamp(input.yawDiff * 0.10, -TANK_CONFIG.TURN_RATE, TANK_CONFIG.TURN_RATE);
+        } else if (Math.abs(this.currentSpeed) > 0.02 && Math.abs(input.yawDiff) > 5) {
+            this.headingYaw += mathClamp(input.yawDiff * 0.06, -TANK_CONFIG.TURN_RATE, TANK_CONFIG.TURN_RATE);
         }
         this.headingYaw = wrapDegrees(this.headingYaw);
 
-        // Apply local forward motion
-        const f = getForwardVector(this.headingYaw);
+        // Smooth angle interpolation
+        this.currentYaw = lerpAngle(this.currentYaw, this.headingYaw, 0.35);
+
+        // Apply local forward motion with stable, critically-damped impulse
+        const f = getForwardVector(this.currentYaw);
         const targetVx = f.x * this.currentSpeed;
         const targetVz = f.z * this.currentSpeed;
 
-        const impulseX = (targetVx - curVel.x) * 0.85;
-        const impulseZ = (targetVz - curVel.z) * 0.85;
-
-        try {
-            this.vehicle.applyImpulse({ x: impulseX, y: 0, z: impulseZ });
-            this.vehicle.setRotation({ x: 0, y: this.headingYaw });
-        } catch (e) {}
+        if (Math.abs(this.currentSpeed) > 0.01) {
+            const impulseX = (targetVx - curVel.x) * 0.35;
+            const impulseZ = (targetVz - curVel.z) * 0.35;
+            try {
+                this.vehicle.applyImpulse({ x: impulseX, y: 0, z: impulseZ });
+                this.vehicle.setRotation({ x: 0, y: this.currentYaw });
+            } catch (e) {}
+        } else {
+            if (Math.hypot(curVel.x, curVel.z) > 0.02) {
+                try {
+                    this.vehicle.applyImpulse({ x: -curVel.x * 0.25, y: 0, z: -curVel.z * 0.25 });
+                } catch (e) {}
+            }
+            try {
+                this.vehicle.setRotation({ x: 0, y: this.currentYaw });
+            } catch (e) {}
+        }
     }
 
     cleanup() {
@@ -259,6 +328,7 @@ export class BoatBehavior {
         this.player = player;
         this.currentSpeed = 0;
         this.headingYaw = vehicle.getRotation()?.y || 0;
+        this.currentYaw = this.headingYaw;
         this.removed = false;
     }
 
@@ -278,22 +348,35 @@ export class BoatBehavior {
 
         if (!hasDriver) {
             if (Math.abs(this.currentSpeed) > 0.02) {
-                this.currentSpeed = lerp(this.currentSpeed, 0, 0.20);
-                const f = getForwardVector(this.headingYaw);
+                this.currentSpeed = lerp(this.currentSpeed, 0, 0.15);
+                const f = getForwardVector(this.currentYaw);
                 try {
                     this.vehicle.applyImpulse({
-                        x: (f.x * this.currentSpeed - curVel.x) * 0.6,
+                        x: (f.x * this.currentSpeed - curVel.x) * 0.35,
                         y: 0,
-                        z: (f.z * this.currentSpeed - curVel.z) * 0.6
+                        z: (f.z * this.currentSpeed - curVel.z) * 0.35
                     });
                 } catch (e) {}
             } else {
                 this.currentSpeed = 0;
             }
+            try {
+                this.vehicle.setProperty("renderphoenix:wasd", "none");
+            } catch (e) {}
             return;
         }
 
-        const input = getPlayerDriverInput(this.player, this.headingYaw);
+        const input = getPlayerDriverInput(this.player, this.currentYaw);
+
+        let wasd = "none";
+        if (input.forward) wasd = "w";
+        else if (input.backward) wasd = "s";
+        else if (input.right) wasd = "d";
+        else if (input.left) wasd = "a";
+
+        try {
+            this.vehicle.setProperty("renderphoenix:wasd", wasd);
+        } catch (e) {}
 
         // Throttle
         if (input.forward) {
@@ -310,26 +393,43 @@ export class BoatBehavior {
 
         // Rudder steering
         const steerDir = this.currentSpeed >= 0 ? 1 : -1;
+        const isMoving = Math.abs(this.currentSpeed) > 0.02;
+
         if (input.left) {
             this.headingYaw -= BOAT_CONFIG.TURN_RATE * steerDir;
         } else if (input.right) {
             this.headingYaw += BOAT_CONFIG.TURN_RATE * steerDir;
-        } else if (Math.abs(this.currentSpeed) > 0.03 && Math.abs(input.yawDiff) > 20) {
-            this.headingYaw += mathClamp(input.yawDiff * 0.12, -BOAT_CONFIG.TURN_RATE, BOAT_CONFIG.TURN_RATE) * steerDir;
+        } else if (isMoving && Math.abs(input.yawDiff) > 5) {
+            this.headingYaw += mathClamp(input.yawDiff * 0.06, -BOAT_CONFIG.TURN_RATE, BOAT_CONFIG.TURN_RATE) * steerDir;
         }
         this.headingYaw = wrapDegrees(this.headingYaw);
 
-        const f = getForwardVector(this.headingYaw);
+        // Smooth angle interpolation
+        this.currentYaw = lerpAngle(this.currentYaw, this.headingYaw, 0.35);
+
+        const f = getForwardVector(this.currentYaw);
         const targetVx = f.x * this.currentSpeed;
         const targetVz = f.z * this.currentSpeed;
 
-        const impulseX = (targetVx - curVel.x) * (inWater ? 0.75 : 0.85);
-        const impulseZ = (targetVz - curVel.z) * (inWater ? 0.75 : 0.85);
+        if (Math.abs(this.currentSpeed) > 0.01) {
+            const impulseFactor = inWater ? 0.35 : 0.40;
+            const impulseX = (targetVx - curVel.x) * impulseFactor;
+            const impulseZ = (targetVz - curVel.z) * impulseFactor;
 
-        try {
-            this.vehicle.applyImpulse({ x: impulseX, y: 0, z: impulseZ });
-            this.vehicle.setRotation({ x: 0, y: this.headingYaw });
-        } catch (e) {}
+            try {
+                this.vehicle.applyImpulse({ x: impulseX, y: 0, z: impulseZ });
+                this.vehicle.setRotation({ x: 0, y: this.currentYaw });
+            } catch (e) {}
+        } else {
+            if (Math.hypot(curVel.x, curVel.z) > 0.02) {
+                try {
+                    this.vehicle.applyImpulse({ x: -curVel.x * 0.25, y: 0, z: -curVel.z * 0.25 });
+                } catch (e) {}
+            }
+            try {
+                this.vehicle.setRotation({ x: 0, y: this.currentYaw });
+            } catch (e) {}
+        }
     }
 
     cleanup() {
